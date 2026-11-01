@@ -1,0 +1,60 @@
+---
+/**
+ * Credit and licence for the dataset whose questions a page shows. Dataset text keeps its own
+ * licence; only MemJudge's own verdicts and scores are CC BY 4.0. The licence id comes from
+ * the result.
+ */
+interface Props {
+  name: string;
+  license: string;
+}
+
+const CREDITS: Record<string, { work: string; authors: string; url: string }> = {
+  locomo: {
+    work: "LoCoMo",
+    authors: "Maharana et al., 2024, Snap Research",
+    url: "https://github.com/snap-research/locomo",
+  },
+  "longmemeval-s": {
+    work: "LongMemEval",
+    authors: "Wu et al., 2025",
+    url: "https://github.com/xiaowu0162/LongMemEval",
+  },
+  "longmemeval-oracle": {
+    work: "LongMemEval",
+    authors: "Wu et al., 2025",
+    url: "https://github.com/xiaowu0162/LongMemEval",
+  },
+};
+
+const LICENCES: Record<string, { label: string; url: string; note?: string }> = {
+  "CC-BY-NC-4.0": {
+    label: "CC BY-NC 4.0",
+    url: "https://creativecommons.org/licenses/by-nc/4.0/",
+    note: "non-commercial use only",
+  },
+  MIT: { label: "the MIT licence", url: "https://opensource.org/license/mit" },
+};
+
+const { name, license } = Astro.props;
+const credit = CREDITS[name];
+const licence = LICENCES[license] ?? { label: license, url: "" };
+---
+
+{credit && (
+  <p class="dataset-credit">
+    Questions, answers and conversation excerpts on this page come from{" "}
+    <a href={credit.url}>{credit.work}</a> ({credit.authors}) and are used under{" "}
+    {licence.url ? <a href={licence.url}>{licence.label}</a> : licence.label}
+    {licence.note ? ` (${licence.note})` : ""}. They are reformatted, and corrected where MemJudge's
+    errata apply. MemJudge's own verdicts and scores are CC BY 4.0.
+  </p>
+)}
+
+<style>
+  .dataset-credit {
+    margin-top: 2.5rem;
+    font-size: var(--t-14);
+    color: var(--ink-2);
+  }
+</style>

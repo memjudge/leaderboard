@@ -1,0 +1,40 @@
+{
+  "name": "memjudge-leaderboard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MemJudge leaderboard: verified, signed results for AI memory systems.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "data": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/build-data.ts",
+    "dev": "astro dev",
+    "build": "npm run data && astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "test": "vitest run",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "@fontsource-variable/atkinson-hyperlegible-mono": "^5.3.0",
+    "@fontsource-variable/atkinson-hyperlegible-next": "^5.3.0",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "astro": "^7.3.6",
+    "aws4fetch": "^1.0.20",
+    "canonicalize": "^5.1.0",
+    "echarts": "^6.1.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@types/node": "^22.20.5",
+    "prettier": "^3.9.9",
+    "prettier-plugin-astro": "^1.1.0",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3",
+    "wrangler": "^4.148.0"
+  }
+}

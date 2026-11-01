@@ -1,0 +1,217 @@
+---
+import "@fontsource-variable/atkinson-hyperlegible-next/wght.css";
+import "@fontsource-variable/atkinson-hyperlegible-mono/wght.css";
+import "../styles/tokens.css";
+import "../styles/base.css";
+import { commitRef } from "../lib/build.ts";
+
+interface Props {
+  title: string;
+  description: string;
+  current?: "leaderboard" | "compare" | "run";
+}
+
+const { title, description, current } = Astro.props;
+const docs = "https://github.com/memjudge/memjudge/blob/main/docs";
+// The commits this build was made from (set by the deploy workflow).
+const live = [
+  ["site", commitRef("leaderboard", import.meta.env.PUBLIC_SITE_COMMIT)],
+  ["results", commitRef("results", import.meta.env.PUBLIC_RESULTS_COMMIT)],
+] as const;
+---
+
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script is:inline>
+      // Apply the saved theme before the first paint.
+      try {
+        const theme = localStorage.getItem("mj-theme");
+        if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <a class="skip" href="#main">
+      Skip to content
+    </a>
+    <header class="site-header">
+      <div class="page bar">
+        <a class="wordmark" href="/" aria-label="MemJudge home">
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <rect x="1" y="1" width="8" height="8" rx="1.2"></rect>
+            <rect x="11" y="1" width="8" height="8" rx="1.2"></rect>
+            <rect x="1" y="11" width="8" height="8" rx="1.2"></rect>
+            <rect class="hollow" x="11.75" y="11.75" width="6.5" height="6.5" rx="0.8"></rect>
+          </svg>
+          MemJudge
+        </a>
+        <nav aria-label="Main">
+          <a href="/" aria-current={current === "leaderboard" ? "page" : undefined}>
+            Leaderboard
+          </a>
+          <a href="/compare/" aria-current={current === "compare" ? "page" : undefined}>
+            Compare
+          </a>
+          <a href="/run/" aria-current={current === "run" ? "page" : undefined}>
+            Run
+          </a>
+          <a href={`${docs}/scoring.md`}>How scoring works</a>
+          <a href="https://github.com/memjudge">GitHub</a>
+          <button type="button" class="theme-switch" data-theme-switch>
+            Theme: system
+          </button>
+        </nav>
+      </div>
+    </header>
+    <main id="main" class="page">
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <div class="page">
+        <p>
+          MemJudge is a free, non-commercial, vendor-neutral benchmark for AI memory systems. The
+          code is Apache-2.0 and scores are published under CC BY 4.0; dataset text in the results
+          keeps its own licence (LoCoMo is CC BY-NC 4.0, non-commercial). It is built by Bit
+          Robotics Ltd, which makes Recalld, so every run says whether its submitter is affiliated
+          with the system it tests.
+        </p>
+        <p>
+          Every result here is signed. <a href={`${docs}/signing.md`}>How signing works</a> and how
+          to check a result yourself.
+        </p>
+        <p>
+          <a href="/terms/">Terms of Use</a> · <a href="/privacy/">Privacy notice</a> ·{" "}
+          <a href="/corrections/">Corrections policy</a> ·{" "}
+          <a href="mailto:admin@memjudge.org">admin@memjudge.org</a>
+        </p>
+        <p>
+          Live:{" "}
+          {live.map(([name, ref], i) => (
+            <>
+              {i > 0 && " · "}
+              {name}{" "}
+              {ref ? (
+                <a class="mono" href={ref.url}>
+                  {ref.label}
+                </a>
+              ) : (
+                "local build"
+              )}
+            </>
+          ))}
+        </p>
+        <slot name="footer" />
+      </div>
+    </footer>
+    <script>
+      import { initThemeSwitch } from "../client/theme.ts";
+      initThemeSwitch();
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  .skip {
+    position: absolute;
+    left: -999px;
+    top: 0.5rem;
+    z-index: 10;
+    padding: 0.5rem 0.75rem;
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .skip:focus {
+    left: 0.5rem;
+  }
+
+  .site-header {
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .site-header .bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1.5rem;
+    min-height: 4rem;
+    padding-block: 0.6rem;
+  }
+
+  .wordmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: var(--t-18);
+    font-weight: 750;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+  }
+
+  .wordmark svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    fill: var(--ink);
+  }
+
+  .wordmark .hollow {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 1.5;
+  }
+
+  .site-header nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 1.25rem;
+    font-size: var(--t-14);
+  }
+
+  .site-header nav a {
+    text-decoration: none;
+    padding-block: 0.35rem;
+    border-bottom: 2px solid transparent;
+  }
+
+  .site-header nav a:hover {
+    border-bottom-color: var(--rule);
+  }
+
+  .site-header nav a[aria-current="page"] {
+    font-weight: 700;
+    border-bottom-color: var(--ink);
+  }
+
+  .theme-switch {
+    padding: 0.3rem 0.65rem;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    background: transparent;
+    font-size: var(--t-14);
+    cursor: pointer;
+  }
+
+  .theme-switch:hover {
+    background: var(--wash);
+  }
+
+  .site-footer {
+    margin-top: calc(var(--section) * 1.25);
+    padding-block: 2rem 3rem;
+    border-top: 1px solid var(--rule);
+    font-size: var(--t-14);
+    color: var(--ink-2);
+  }
+
+  .site-footer p + p {
+    margin-top: 0.6rem;
+  }
+</style>

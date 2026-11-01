@@ -1,0 +1,36 @@
+[
+  {
+    "id": "0-provisional",
+    "name": "Preview season",
+    "started": "2026-09-01",
+    "provisional": true,
+    "summary": "Test season matching the signed fixtures.",
+    "details": null,
+    "upgrade": "re-judge",
+    "judge": {
+      "routes": { "anthropic": "anthropic:claude-sonnet-5-5" },
+      "default_route": "anthropic",
+      "effort": "medium",
+      "max_output_tokens": 4000,
+      "prompt_version": "v1",
+      "prompt_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  },
+  {
+    "id": "1",
+    "name": "Season 1",
+    "started": "2026-10-01",
+    "provisional": true,
+    "summary": "Test season with no fixtures in it yet.",
+    "details": "https://github.com/memjudge/memjudge/pull/9",
+    "upgrade": "re-judge",
+    "judge": {
+      "routes": { "anthropic": "anthropic:claude-sonnet-5-5" },
+      "default_route": "anthropic",
+      "effort": "medium",
+      "max_output_tokens": 4000,
+      "prompt_version": "v3",
+      "prompt_hash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    }
+  }
+]

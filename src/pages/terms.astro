@@ -1,0 +1,146 @@
+---
+import Base from "../layouts/Base.astro";
+import { longDate, TERMS_UPDATED } from "../lib/legal.ts";
+
+const repo = "https://github.com/memjudge/memjudge/blob/main";
+---
+
+<Base
+  title="Terms of Use: MemJudge"
+  description="The terms for using memjudge.org, its hosted runner and its published results."
+>
+  <article class="legal">
+    <h1>Terms of Use</h1>
+    <p class="muted">Last updated {longDate(TERMS_UPDATED)}</p>
+
+    <h2>1. Who we are</h2>
+    <p>
+      MemJudge (memjudge.org) is a free, non-commercial, open-source benchmark for AI memory
+      systems. It is run by Bit Robotics Ltd, a company registered in England and Wales (company
+      number 11680576), registered office 13 Freeland Park, Wareham Road, Lytchett House, Poole,
+      Dorset, BH16 6FA. Bit Robotics also makes Recalld, a memory system MemJudge tests; every
+      result says whether the person who ran it is affiliated with the system it tests. Contact:{" "}
+      <a href="mailto:admin@memjudge.org">admin@memjudge.org</a>.
+    </p>
+
+    <h2>2. What these terms cover</h2>
+    <p>
+      These terms cover the memjudge.org website, the hosted runner you use through the{" "}
+      <a href="/run/">Run</a> page, and the results we publish. The MemJudge software itself is
+      licensed separately under Apache-2.0; you can run it on your own computer without these terms.
+      How we handle personal data is described in the <a href="/privacy/">Privacy notice</a>.
+    </p>
+
+    <h2>3. Using the site</h2>
+    <p>
+      You may read, link to and reuse published results under their licences (section 8). Do not
+      attack, overload or try to get around the security or limits of the site or the runner.
+    </p>
+
+    <h2>4. Hosted runs</h2>
+    <ul>
+      <li>
+        <strong>Who can run.</strong> You must be 18 or over and agree to these terms when you start
+        a run.
+      </li>
+      <li>
+        <strong>Sign-in.</strong> You sign in with GitHub. Your GitHub account id is used only to
+        apply the limits (one run at a time, three a day); it is stored only as a keyed hash and
+        never published.
+      </li>
+      <li>
+        <strong>Your keys.</strong> You give API keys for a memory service and for the judge. They
+        reach us over HTTPS, are stored only encrypted, are used only for that run, are deleted when
+        a job reads them (any left unused are deleted within 3 days) and are never logged. Resuming
+        a run asks for them again.
+      </li>
+      <li>
+        <strong>Code we do not control.</strong> During a hosted run, your keys are used by
+        third-party code: the memory service's SDK and the open-source packages that the connector
+        and MemJudge depend on. We review connectors, pin exact package versions and limit where a
+        run can connect, but we cannot guarantee this code is free of errors or malicious changes. A
+        compromised package could read your keys and misuse them, for example through the vendor's
+        own API.
+      </li>
+      <li>
+        <strong>Use keys made for the run.</strong> For each run you must create new keys that you
+        use for nothing else, set a spending limit on them where the vendor offers one, and revoke
+        them when you are done with the run. If you think a key was misused, revoke it at once and
+        tell us at <a href="mailto:admin@memjudge.org">admin@memjudge.org</a>.
+      </li>
+      <li>
+        <strong>Your costs.</strong> The memory service and the judge bill your own accounts, and
+        you are responsible for those charges. We show the judge's estimated upper cost before you
+        start; we do not estimate the memory service's cost and are not responsible for charges on
+        your accounts.
+      </li>
+      <li>
+        <strong>Your vendor's terms.</strong> You must have the right to run the benchmark on your
+        memory service account and to have its result published. Some services' terms limit
+        benchmarking or publishing results. We do not offer hosted runs of services whose terms we
+        know forbid it (currently Mem0 Platform and Zep Cloud). For the others, checking your
+        service's terms is your responsibility, and by starting a run you confirm you have.
+      </li>
+      <li>
+        <strong>Honest answers.</strong> Answer the affiliation question truthfully, and do not use
+        accounts opened under false details.
+      </li>
+      <li>
+        <strong>Availability.</strong> The runner is free and provided as it is. A run may stop or
+        fail; a stopped run can be resumed within 48 hours, at most 3 times. We may refuse or stop
+        runs to protect the service or comply with the law.
+      </li>
+    </ul>
+
+    <h2>5. Publication</h2>
+    <p>
+      A completed hosted run is published automatically and publicly: its scores, every question,
+      the context your memory system returned, the judge's verdict and your affiliation answer. It
+      is signed so anyone can check it. Do not start a run you do not want published.
+    </p>
+    <p>
+      By starting a run you give Bit Robotics Ltd a free, worldwide and permanent permission to
+      publish its result, including the parts that come from your accounts (the context your memory
+      system returned and the judge's replies), and to license MemJudge's own parts as section 8
+      describes. You confirm you are allowed to give it. We may correct, label or remove results
+      under our <a href="/corrections/">Corrections policy</a>.
+    </p>
+
+    <h2>6. Your responsibility</h2>
+    <p>
+      If someone, such as a memory-service vendor, makes a claim against Bit Robotics Ltd because
+      you broke these terms or your memory service's terms, you are responsible for the reasonable
+      losses and costs this directly causes us. This does not apply to anything that is our fault.
+    </p>
+
+    <h2>7. No warranty, and our liability</h2>
+    <p>
+      MemJudge is free and provided "as is". We work to make results accurate and reproducible and
+      to keep your keys safe, but we do not guarantee either. To the extent the law allows, we are
+      not liable for indirect or consequential loss, lost profit or data, charges on your vendor or
+      judge accounts, or loss from the theft or misuse of keys you gave for a run, including misuse
+      by third-party code the run uses. Our total liability to you for anything to do with MemJudge
+      is limited to £100. Nothing here limits liability that the law does not allow to be limited,
+      such as for fraud, or for death or personal injury caused by negligence.
+    </p>
+
+    <h2>8. Licences</h2>
+    <p>
+      MemJudge's code is Apache-2.0. Scores, metrics and verdicts are CC BY 4.0. Dataset text inside
+      results keeps its own licence: LoCoMo is CC BY-NC 4.0 (non-commercial use only) and
+      LongMemEval is MIT. "MemJudge" and its logo are trademarks of Bit Robotics Ltd (
+      <a href={`${repo}/TRADEMARK.md`}>trademark policy</a>). Other product names belong to their
+      owners and are used only to identify the systems tested; MemJudge is not affiliated with or
+      endorsed by them.
+    </p>
+
+    <h2>9. Changes and law</h2>
+    <p>
+      We may update these terms; the date at the top shows the current version. A change applies to
+      runs started after it, and to your use of the site from then on. These terms are governed by
+      the law of England and Wales, and you can bring legal proceedings in the courts of England and
+      Wales. If you live in Scotland or Northern Ireland, you can also bring them in your local
+      courts.
+    </p>
+  </article>
+</Base>

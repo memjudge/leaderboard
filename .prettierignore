@@ -1,0 +1,15 @@
+dist/
+.astro/
+.wrangler/
+node_modules/
+package-lock.json
+src/generated/
+public/data/
+public/results/
+.cache/
+.preview/
+tests/fixtures/
+schemas/
+seasons.json
+LICENSE
+.impeccable/

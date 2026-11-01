@@ -1,0 +1,568 @@
+---
+import Base from "../layouts/Base.astro";
+import { getSite } from "../lib/site.ts";
+
+const docs = "https://github.com/memjudge/memjudge/blob/main/docs";
+// Season names for the re-judge form (the runner knows seasons only by id).
+const seasons = JSON.stringify(getSite().seasons).replace(/</g, "\\u003c");
+---
+
+<Base
+  title="Start a hosted run: MemJudge"
+  description="Benchmark a memory system on a full MemJudge dataset with your own keys. The answers are judged by the season's judge and the signed result is published here."
+  current="run"
+>
+  <header class="run-head">
+    <h1>Start a hosted run</h1>
+    <p class="lede">
+      The runner benchmarks one memory system on a full dataset with your keys, judges every answer
+      with this season's judge, and publishes the signed result on the leaderboard.
+    </p>
+    <ul class="run-points">
+      <li>
+        <strong>Your keys, your costs.</strong> The memory system's usage is billed by its vendor,
+        and the judge by Anthropic or OpenRouter. The form shows the judge's typical cost and upper
+        bound before you start.
+      </li>
+      <li>
+        <strong>Keys are used for this run only.</strong> They are encrypted for the run's jobs,
+        deleted once read and never logged. Resuming a run asks for them again.
+      </li>
+      <li>
+        <strong>The result is public.</strong> Every answer, the judge's verdicts and your
+        affiliation answer are published with a signature.{" "}
+        <a href={`${docs}/signing.md`}>How signing works</a>.
+      </li>
+      <li>
+        <strong>Stopped is not lost.</strong> If the memory system or the judge fails, the run stops
+        and keeps its progress. You can resume it within 48 hours.
+      </li>
+    </ul>
+  </header>
+
+  <p class="run-notice" data-notice role="status" aria-live="polite" hidden></p>
+
+  <p class="run-account muted small" data-account hidden>
+    Signed in with GitHub.
+    <button type="button" class="button quiet" data-signout>
+      Sign out
+    </button>
+  </p>
+
+  <p class="run-panel run-loading muted" data-loading role="status" hidden>
+    Loading…
+  </p>
+
+  <section class="run-panel" data-signin hidden aria-labelledby="signin-title">
+    <h2 id="signin-title">Sign in</h2>
+    <p>
+      Starting a run needs a GitHub sign-in. MemJudge keeps only a keyed hash of your account id, to
+      apply the limits: one run at a time and three a day. Nothing about your account is published.{" "}
+      <a href="/privacy/">Privacy notice</a>.
+    </p>
+    <p>
+      <a class="button" data-signin-link href="#">
+        Sign in with GitHub
+      </a>
+    </p>
+  </section>
+
+  <section class="run-panel" data-status hidden aria-labelledby="status-title">
+    <h2 id="status-title" data-run-title>
+      Your run
+    </h2>
+    <p class="muted small" data-run-meta></p>
+    <p class="run-state" data-state aria-live="polite"></p>
+    <ol class="run-steps" data-steps hidden aria-label="Progress"></ol>
+    <p class="run-error" data-run-error hidden></p>
+    <p class="muted" data-resume-note hidden></p>
+    <details class="run-log" data-log>
+      <summary>Log</summary>
+      <p class="muted small">
+        The newest lines the run's jobs wrote. The keys you entered are removed from them. Logs are
+        kept 30 days.
+      </p>
+      <p class="muted small" data-log-error hidden></p>
+      <pre class="run-log-lines" data-log-lines tabindex="0"></pre>
+    </details>
+    <p class="muted small" data-done-note hidden>
+      Publishing to the leaderboard. The link appears here when the result page is live, usually
+      within a minute or two.
+    </p>
+    <div class="run-actions">
+      <a class="button" data-result hidden>
+        View the result
+      </a>
+      <button type="button" class="button quiet" data-stop hidden>
+        Stop the run
+      </button>
+      <button type="button" class="button quiet" data-another hidden>
+        Start another run
+      </button>
+    </div>
+    <form class="run-form" data-resume hidden novalidate>
+      <h3>Resume</h3>
+      <p class="muted small">Enter the keys again. They are not kept between attempts.</p>
+      <div class="run-keys" data-resume-keys></div>
+      <p class="run-error" data-resume-error hidden></p>
+      <button type="submit" class="button">
+        Resume the run
+      </button>
+    </form>
+  </section>
+
+  <form class="run-panel run-form" data-start hidden novalidate aria-labelledby="start-title">
+    <h2 id="start-title">New run</h2>
+
+    <fieldset>
+      <legend>Dataset</legend>
+      <div data-datasets></div>
+    </fieldset>
+
+    <div class="run-keynote">
+      <p>
+        <strong>Use keys made for this run.</strong> Your keys are used by code MemJudge does not
+        fully control: the memory system's SDK and the open-source packages it relies on. MemJudge
+        reviews and pins that code, but a compromised package could misuse a key. Create new keys
+        for this run, set a spending limit where the vendor offers one, and revoke them when you are
+        done.
+      </p>
+      <label class="choice">
+        <input type="checkbox" name="agree_keys" data-agree required />
+        <span>
+          I am using keys made only for this run, with a spending limit where the vendor offers one,
+          and I will revoke them when I am done.
+        </span>
+      </label>
+    </div>
+
+    <fieldset>
+      <legend>Memory system</legend>
+      <label class="field run-wide">
+        <span class="visually-hidden">Memory system</span>
+        <select name="connector" data-connector></select>
+      </label>
+      <p class="muted small" data-connector-note></p>
+      <label class="field run-wide" data-preset-field hidden>
+        <span>Settings preset</span>
+        <select name="preset" data-preset></select>
+      </label>
+      <div class="run-keys" data-keys></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Judge</legend>
+      <div data-routes></div>
+      <div class="run-keys" data-judge-key></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Are you affiliated with the memory system you are testing?</legend>
+      <label class="choice">
+        <input type="radio" name="affiliated" value="no" />
+        <span>No</span>
+      </label>
+      <label class="choice">
+        <input type="radio" name="affiliated" value="yes" />
+        <span>Yes</span>
+      </label>
+      <label class="field run-wide" data-system hidden>
+        Which system?
+        <select name="system" data-systems></select>
+      </label>
+    </fieldset>
+
+    <p class="run-cost" data-cost></p>
+    <p class="muted small">
+      Memory-system usage is billed by its vendor and is not estimated. Runs use the full dataset.
+    </p>
+    <label class="choice run-agree">
+      <input type="checkbox" name="agree" data-agree required />
+      <span>
+        I am 18 or over and agree to the <a href="/terms/">Terms of Use</a>, and I have checked that
+        my memory service's terms allow this benchmark and the publication of its result.
+      </span>
+    </label>
+    <p class="run-error" data-start-error hidden></p>
+    <button type="submit" class="button" data-submit>
+      Start the run
+    </button>
+  </form>
+
+  <form
+    class="run-panel run-form"
+    data-rejudge-form
+    hidden
+    novalidate
+    aria-labelledby="rejudge-title"
+  >
+    <h2 id="rejudge-title">Re-judge a run</h2>
+    <p data-rejudge-about></p>
+    <p class="muted small">
+      The run's stored contexts are judged again with this season's judge. The memory system is not
+      called, so only the judge is billed. The new result is published next to the original, which
+      stays in its own season. A run can be re-judged once per season.{" "}
+      <a href={`${docs}/seasons.md`}>About seasons</a>.
+    </p>
+    <fieldset>
+      <legend>Judge</legend>
+      <div data-rejudge-routes></div>
+      <div class="run-keys" data-rejudge-key></div>
+    </fieldset>
+    <p class="run-cost" data-rejudge-cost></p>
+    <label class="choice run-agree">
+      <input type="checkbox" name="agree" data-agree required />
+      <span>
+        I am 18 or over and agree to the <a href="/terms/">Terms of Use</a>.
+      </span>
+    </label>
+    <p class="run-error" data-rejudge-error hidden></p>
+    <button type="submit" class="button" data-rejudge-submit>
+      Re-judge the run
+    </button>
+  </form>
+
+  <section class="run-panel" data-runs hidden aria-labelledby="runs-title">
+    <h2 id="runs-title">Your runs</h2>
+    <p class="muted small">
+      Your last 20 runs from the past 90 days, on any browser you sign in with.
+    </p>
+    <ul class="run-list" data-run-list></ul>
+  </section>
+
+  <p slot="footer" data-runner hidden></p>
+  <script type="application/json" id="seasons-data" set:html={seasons} />
+</Base>
+
+<script>
+  import { initRun } from "../client/run.ts";
+  void initRun();
+</script>
+
+<style is:global>
+  .run-head {
+    margin-top: 2.5rem;
+    max-width: 48rem;
+  }
+
+  .run-head .lede {
+    margin-top: 1rem;
+    font-size: var(--t-18);
+    color: var(--ink-2);
+  }
+
+  .run-points {
+    margin: 1.5rem 0 0;
+    padding-left: 1.1rem;
+    display: grid;
+    gap: 0.6rem;
+    color: var(--ink-2);
+  }
+
+  .run-points strong {
+    color: var(--ink);
+  }
+
+  .run-notice {
+    margin-top: 1.5rem;
+    max-width: 42rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--ink);
+    border-radius: var(--radius);
+  }
+
+  .run-panel {
+    margin-top: 2.5rem;
+    max-width: 42rem;
+  }
+
+  .run-account {
+    margin-top: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .run-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .run-loading::before {
+    content: "";
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid var(--rule);
+    border-top-color: var(--ink);
+    border-radius: 50%;
+    animation: run-spin 0.8s linear infinite;
+  }
+
+  @keyframes run-spin {
+    to {
+      transform: rotate(1turn);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .run-loading::before {
+      animation-duration: 2.4s;
+    }
+  }
+
+  .run-panel > h2 + * {
+    margin-top: 0.75rem;
+  }
+
+  .run-form fieldset {
+    margin: 1.75rem 0 0;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+  }
+
+  .run-form legend {
+    margin-bottom: 0.6rem;
+    font-weight: 650;
+  }
+
+  .choice {
+    display: flex;
+    gap: 0.65rem;
+    align-items: flex-start;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+
+  .choice + .choice {
+    margin-top: 0.5rem;
+  }
+
+  .choice:has(input:checked) {
+    border-color: var(--ink);
+  }
+
+  .choice input {
+    margin-top: 0.3rem;
+    accent-color: var(--ink);
+  }
+
+  .choice .muted {
+    display: block;
+    font-size: var(--t-14);
+  }
+
+  .run-wide {
+    display: flex;
+    width: 100%;
+    margin-top: 0.75rem;
+  }
+
+  .run-wide select,
+  .run-wide input {
+    width: 100%;
+  }
+
+  .run-keys {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+  }
+
+  .run-keys .field {
+    display: flex;
+    width: 100%;
+  }
+
+  .run-form input[type="password"] {
+    width: 100%;
+    min-height: 2.5rem;
+    padding: 0.4rem 0.7rem;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: var(--t-14);
+  }
+
+  .run-form input:hover {
+    border-color: var(--ink-3);
+  }
+
+  .run-cost {
+    margin-top: 2rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius);
+    background: var(--wash);
+  }
+
+  .run-keynote {
+    margin-top: 1.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius);
+    background: var(--wash);
+  }
+
+  .run-keynote .choice {
+    margin-top: 0.75rem;
+  }
+
+  .run-form button[type="submit"] {
+    margin-top: 1.25rem;
+  }
+
+  /* the same plain bordered box as the compare page's warning */
+  .run-agree {
+    margin-top: 1.5rem;
+  }
+
+  .run-error {
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--ink);
+    border-radius: var(--radius);
+  }
+
+  .run-state {
+    margin-top: 1.25rem;
+    font-weight: 650;
+  }
+
+  .run-steps {
+    margin: 1.25rem 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.85rem;
+  }
+
+  .run-steps .run-step {
+    display: grid;
+    grid-template-columns: 1.25rem 1fr auto;
+    align-items: center;
+    column-gap: 0.6rem;
+    row-gap: 0.35rem;
+  }
+
+  .run-steps .run-step::before {
+    content: "";
+    box-sizing: border-box;
+    width: 0.85rem;
+    height: 0.85rem;
+    border: 2px solid var(--rule);
+    border-radius: 50%;
+  }
+
+  .run-steps .run-step[data-step="done"]::before {
+    content: "✓";
+    border: 0;
+    width: auto;
+    height: auto;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .run-steps .run-step[data-step="active"]::before {
+    border-color: var(--rule);
+    border-top-color: var(--ink);
+    animation: run-spin 0.8s linear infinite;
+  }
+
+  .run-steps .run-step[data-step="waiting"] {
+    color: var(--ink-3);
+  }
+
+  .run-steps .run-step[data-step="active"] .run-step-label {
+    font-weight: 650;
+  }
+
+  .run-steps .run-progress {
+    grid-column: 2 / -1;
+    width: 100%;
+    height: 0.5rem;
+    accent-color: var(--ink);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .run-steps .run-step[data-step="active"]::before {
+      animation-duration: 2.4s;
+    }
+  }
+
+  .run-log {
+    margin-top: 1.25rem;
+  }
+
+  .run-log summary {
+    cursor: pointer;
+    font-weight: 650;
+  }
+
+  .run-log > p {
+    margin-top: 0.5rem;
+  }
+
+  .run-log-lines {
+    margin-top: 0.5rem;
+    max-height: 24rem;
+    overflow: auto;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    font-size: var(--t-12);
+  }
+
+  .run-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+  }
+
+  .run-actions:not(:has(> :not([hidden]))) {
+    display: none;
+  }
+
+  .run-list {
+    margin: 0.75rem 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .run-item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+  }
+
+  .run-item[aria-current] {
+    border-color: var(--ink);
+  }
+
+  .run-item .muted {
+    display: block;
+  }
+
+  [data-resume] h3 {
+    margin-top: 2rem;
+  }
+
+  .run-panel [hidden],
+  .run-panel[hidden],
+  .run-notice[hidden],
+  .run-account[hidden] {
+    display: none;
+  }
+</style>

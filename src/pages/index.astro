@@ -1,0 +1,17 @@
+---
+import BoardView from "../components/BoardView.astro";
+import EmptyBoard from "../components/EmptyBoard.astro";
+import Base from "../layouts/Base.astro";
+import { getSite } from "../lib/site.ts";
+
+const site = getSite();
+const board = site.boards[0];
+---
+
+<Base
+  title="MemJudge: AI memory benchmark leaderboard"
+  description="Signed, reproducible results for AI memory systems: accuracy against context tokens and latency, down to every judged question."
+  current="leaderboard"
+>
+  {board ? <BoardView board={board} /> : <EmptyBoard />}
+</Base>

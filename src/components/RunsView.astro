@@ -1,0 +1,113 @@
+---
+/**
+ * The per-question part of a run page (one run) or the compare page (two to four runs).
+ * The browser fills it from /data; on the compare page the compare script mounts it.
+ */
+import "../styles/runs-view.css";
+import type { RunEntry } from "../lib/site-types.ts";
+
+interface Props {
+  mode: "run" | "compare";
+  runIds?: string[];
+  categories?: string[];
+  /** The run, on a run page. */
+  single?: RunEntry;
+}
+
+const { mode, runIds = [], single } = Astro.props;
+const hasData = mode === "compare" || Boolean(single?.dataFile);
+const compared = mode === "compare";
+---
+
+<div class="runs-view" data-runs-view data-mode={mode} data-run-ids={JSON.stringify(runIds)}>
+  {compared && (
+    <>
+      <section class="section" aria-labelledby="h2h-title">
+        <div class="section-head">
+          <div>
+            <h2 id="h2h-title">Head to head</h2>
+            <p>
+              For each pair, the questions only one of the two got right. A lopsided split means a
+              real difference; p is the chance of a split at least this uneven if both runs were
+              equally good (exact McNemar test). Pick a count to see those questions.
+            </p>
+          </div>
+        </div>
+        <div data-view="h2h" />
+      </section>
+      <section class="section" aria-labelledby="cmp-tradeoff-title">
+        <div class="section-head">
+          <div>
+            <h2 id="cmp-tradeoff-title">Accuracy against context tokens</h2>
+            <p>The vertical line is each run's 95% confidence interval.</p>
+          </div>
+        </div>
+        <div class="chart cmp-tradeoff" data-view="tradeoff" />
+      </section>
+    </>
+  )}
+
+  <section class="section" aria-labelledby="where-title">
+    <div class="section-head">
+      <div>
+        <h2 id="where-title">Where it fails</h2>
+        <p>
+          Accuracy by question category, with 95% confidence intervals. A low category is where the
+          memory system misses the context the question needs.
+        </p>
+      </div>
+    </div>
+    <div class={`where-grid${compared ? " compared" : ""}`}>
+      <div class="chart" data-view="categories"></div>
+      <div class="table-wrap" data-view="category-table">
+        <slot name="category-table" />
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="questions" aria-labelledby="questions-title">
+    <div class="section-head">
+      <div>
+        <h2 id="questions-title">Every question</h2>
+        <p>
+          One square per question, grouped by category. Select a square to read the question, the
+          gold answer, the judge's reason and the context it was given.
+        </p>
+      </div>
+    </div>
+    {hasData ? (
+      <>
+        <div class="quilt-legend" data-view="legend" />
+        <div data-view="quilt" />
+        <div class="filters" data-view="filters" />
+        <div class="question-list" data-view="list">
+          <p class="muted">Loading questions…</p>
+        </div>
+      </>
+    ) : (
+      <p class="muted">Per-question results are not available for this run.</p>
+    )}
+  </section>
+
+  <section class="section" aria-labelledby="latency-title">
+    <div class="section-head">
+      <div>
+        <h2 id="latency-title">Retrieval latency</h2>
+        <p>
+          The share of questions whose context came back within a given time. Further left is
+          faster.
+        </p>
+      </div>
+    </div>
+    {hasData ? (
+      <div class="chart latency-chart" data-view="latency" />
+    ) : (
+      <p class="muted">Not available.</p>
+    )}
+  </section>
+</div>
+
+<script>
+  import { mountFromPage } from "../client/runs-view.ts";
+  void mountFromPage();
+</script>

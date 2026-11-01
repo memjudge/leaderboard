@@ -1,0 +1,158 @@
+---
+import {
+  duration,
+  fixed,
+  ingestionNote,
+  ingestionTotalNote,
+  int,
+  pct,
+  rate,
+  secs,
+  usd,
+} from "../lib/format.ts";
+import type { RunEntry } from "../lib/site-types.ts";
+import { sizeLabel } from "../lib/types.ts";
+
+interface Props {
+  run: RunEntry;
+  /** The run at each result size, for the judge cost of the whole run. */
+  sizes: RunEntry[];
+}
+
+const { run, sizes } = Astro.props;
+const m = run.result.metrics;
+const o = m.overall;
+// Memory systems report no cost; the judge's is known (its API, or the price table).
+const judgeCosts = sizes.map((s) => s.result.metrics.cost.judge_usd);
+const judgeTotal = judgeCosts.some((c) => c == null)
+  ? null
+  : judgeCosts.reduce<number>((a, c) => a + c!, 0);
+const costSource: Record<string, string> = {
+  api: "reported by the judge's API",
+  "price-table": `from price table ${run.result.price_table_version}`,
+};
+---
+
+<section class="section figures" aria-labelledby="figures-title">
+  <h2 id="figures-title" class="visually-hidden">
+    Figures
+  </h2>
+  <div class="groups">
+    <div>
+      <h3>Context</h3>
+      <dl class="facts">
+        <div>
+          <dt>Tokens per question, mean</dt>
+          <dd>{int(o.context_tokens_mean)}</dd>
+        </div>
+        <div>
+          <dt>Tokens, 95th percentile</dt>
+          <dd>{int(o.context_tokens_p95)}</dd>
+        </div>
+        <div>
+          <dt>Accuracy per 1,000 tokens</dt>
+          <dd>{fixed(o.efficiency)}</dd>
+        </div>
+        <div>
+          <dt>Contexts cut to the budget</dt>
+          <dd>{pct(o.truncation_rate)}</dd>
+        </div>
+      </dl>
+    </div>
+    <div>
+      <h3>Speed</h3>
+      <dl class="facts">
+        <div>
+          <dt>Retrieval, median</dt>
+          <dd>{secs(o.retrieval_latency_p50_s)}</dd>
+        </div>
+        <div>
+          <dt>Retrieval, 95th percentile</dt>
+          <dd>{secs(o.retrieval_latency_p95_s)}</dd>
+        </div>
+        <div>
+          <dt>Ingestion, total</dt>
+          <dd>{duration(m.ingestion.total_s) + ingestionTotalNote(m.ingestion)}</dd>
+        </div>
+        <div>
+          <dt>Ingestion, per turn</dt>
+          <dd>{secs(m.ingestion.per_turn_s) + ingestionNote(m.ingestion)}</dd>
+        </div>
+      </dl>
+    </div>
+    <div>
+      <h3>Judge cost</h3>
+      <dl class="facts">
+        {sizes.map((s) => (
+          <div>
+            <dt>{sizeLabel(s.result.size)}</dt>
+            <dd>{usd(s.result.metrics.cost.judge_usd)}</dd>
+          </div>
+        ))}
+        <div>
+          <dt>Whole run</dt>
+          <dd>
+            {usd(judgeTotal)}
+            <span class="source muted">{costSource[m.cost.judge_cost_source] ?? ""}</span>
+          </dd>
+        </div>
+      </dl>
+    </div>
+    <div>
+      <h3>Checks</h3>
+      <dl class="facts">
+        <div>
+          <dt>Abstention accuracy</dt>
+          <dd>{rate(o.abstention_accuracy)}</dd>
+        </div>
+        <div>
+          <dt>No verdict (call failed)</dt>
+          <dd>{int(o.errors)}</dd>
+        </div>
+        <div>
+          <dt>Flagged by the judge</dt>
+          <dd>{int(o.flagged)}</dd>
+        </div>
+        {o.evidence_recall.n > 0 && (
+          <div>
+            <dt>Evidence recall</dt>
+            <dd>{rate(o.evidence_recall)}</dd>
+          </div>
+        )}
+        {o.stale_fact_rate.n > 0 && (
+          <div>
+            <dt>Stale facts</dt>
+            <dd>{rate(o.stale_fact_rate)}</dd>
+          </div>
+        )}
+      </dl>
+    </div>
+  </div>
+</section>
+
+<style>
+  .figures {
+    margin-top: 2.5rem;
+  }
+
+  .groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15.5rem), 1fr));
+    gap: 2rem 2.5rem;
+  }
+
+  h3 {
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--ink);
+    font-size: var(--t-14);
+  }
+
+  .facts {
+    grid-template-columns: 1fr;
+  }
+
+  .source {
+    display: block;
+    font-size: var(--t-12);
+  }
+</style>

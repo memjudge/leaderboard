@@ -1,0 +1,62 @@
+---
+import Base from "../layouts/Base.astro";
+---
+
+<Base
+  title="Corrections policy: MemJudge"
+  description="How to report a wrong or unfair result, and what MemJudge does about it."
+>
+  <article class="legal">
+    <h1>Corrections policy</h1>
+    <p class="muted">Last updated 19 October 2026</p>
+    <p>
+      MemJudge aims to be fair to every system it tests. If you think a result is wrong, unfair or
+      should not be published, tell us.
+    </p>
+
+    <h2>How to report</h2>
+    <p>
+      Email <a href="mailto:admin@memjudge.org">admin@memjudge.org</a> or open an issue at{" "}
+      <a href="https://github.com/memjudge/memjudge/issues">github.com/memjudge/memjudge</a>. Say
+      which result (its link), what is wrong and what you would like done. Anyone can report;
+      vendors of a tested system get priority. We aim to reply within 3 business days.
+    </p>
+
+    <h2>What we can do</h2>
+    <ul>
+      <li>
+        <strong>Correct</strong>, when the setup was wrong: for example a connector that did not
+        follow the vendor's documented configuration. We fix it and re-run, or invite the vendor to.
+      </li>
+      <li>
+        <strong>Label</strong>, when a result stands but has a known limit: for example "self-hosted
+        open-source version" or "the service cannot take conversation dates".
+      </li>
+      <li>
+        <strong>Remove</strong>, when publishing breaks a law, a court order or the terms that bind
+        the person who ran it. While a report is decided we may hide the disputed result.
+      </li>
+    </ul>
+
+    <h2>Right of reply and records</h2>
+    <p>
+      A vendor can ask for its response to be linked next to its results. Every correction or
+      removal is recorded in the public{" "}
+      <a href="https://github.com/memjudge/results/blob/main/CORRECTIONS.md">corrections log</a>{" "}
+      with its date and reason. Results are signed, so a corrected result is published as a new,
+      labelled result rather than by editing the original. A low score alone is not a reason to
+      remove a result.
+    </p>
+
+    <h2>How we publish</h2>
+    <p>
+      We publish first and tell the vendor the same day, with links to the result and the connector
+      code; we do not wait for permission. Every run of a connector stays listed on its run page, so
+      a re-run after a fix never hides the earlier result. The fairness rules we follow are in{" "}
+      <a href="https://github.com/memjudge/memjudge/blob/main/docs/publishing-results.md">
+        publishing results
+      </a>
+      .
+    </p>
+  </article>
+</Base>

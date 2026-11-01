@@ -1,0 +1,114 @@
+---
+import Base from "../layouts/Base.astro";
+import { date } from "../lib/format.ts";
+import { getSite } from "../lib/site.ts";
+
+const site = getSite();
+// Newest first: the current season leads.
+const seasons = [...site.seasons].reverse();
+const model = (spec: string | undefined) => spec?.split(":").slice(1).join(":") ?? "";
+---
+
+<Base
+  title="Seasons: MemJudge"
+  description="Each season is one fixed set of judging rules. Results are ranked only against results from the same season."
+>
+  <article class="legal">
+    <h1>Seasons</h1>
+    <p>
+      A season is one fixed set of judging rules: the judge model, its settings and the judge
+      prompt. Every result records its season, and the leaderboard ranks only results from the same
+      season. When the rules change, a new season starts. Earlier runs stay listed below the ranking
+      until they are re-judged, or run again when what the judge sees has changed.{" "}
+      <a href="https://github.com/memjudge/memjudge/blob/main/docs/seasons.md">How seasons work</a>.
+    </p>
+
+    {seasons.map((s) => (
+      <section class="season" id={`season-${s.id}`}>
+        <h2>
+          {s.name}
+          {s.id === site.currentSeason && <span class="tag">Current</span>}
+          {s.provisional && <span class="tag quiet">Provisional</span>}
+        </h2>
+        <p>{s.summary}</p>
+        <dl class="season-facts">
+          <div>
+            <dt>Started</dt>
+            <dd>{date(s.started)}</dd>
+          </div>
+          <div>
+            <dt>Judge</dt>
+            <dd>
+              {model(s.judge.routes[s.judge.default_route])}, effort {s.judge.effort ?? "default"}
+            </dd>
+          </div>
+          <div>
+            <dt>Prompt</dt>
+            <dd>
+              {s.judge.prompt_version}{" "}
+              <span class="mono muted">{s.judge.prompt_hash.slice(0, 19)}…</span>
+            </dd>
+          </div>
+          {s.id !== site.seasons[0]?.id && (
+            <div>
+              <dt>Earlier runs</dt>
+              <dd>
+                {s.upgrade === "re-judge"
+                  ? "Can be re-judged into this season"
+                  : "Need a new run (what the judge sees changed)"}
+              </dd>
+            </div>
+          )}
+          {s.details && (
+            <div>
+              <dt>Details</dt>
+              <dd>
+                <a href={s.details}>The change that started it ↗</a>
+              </dd>
+            </div>
+          )}
+        </dl>
+      </section>
+    ))}
+  </article>
+</Base>
+
+<style>
+  .season {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--rule);
+  }
+
+  .season h2 {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem 0.75rem;
+  }
+
+  .tag {
+    padding: 0.05rem 0.45rem;
+    border: 1px solid var(--ink);
+    border-radius: var(--radius);
+    font-size: var(--t-12);
+    font-weight: 650;
+  }
+
+  .tag.quiet {
+    border-color: var(--rule);
+    color: var(--ink-2);
+  }
+
+  .season-facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+    gap: 0.75rem 2rem;
+    margin-top: 1rem;
+    font-size: var(--t-14);
+  }
+
+  .season-facts dt {
+    color: var(--ink-2);
+  }
+</style>

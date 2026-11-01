@@ -1,0 +1,924 @@
+---
+import {
+  DEFAULT_BUDGET,
+  judgeLabel,
+  otherSize,
+  scopeKey,
+  scopeLabel,
+  type Board,
+} from "../lib/boards.ts";
+import { date, fixed, int, pctNumber, secs } from "../lib/format.ts";
+import { modelsLabel } from "../lib/naming.ts";
+import { canRejudge, seasonById, seasonName } from "../lib/seasons.ts";
+import { boardRuns, getSite } from "../lib/site.ts";
+import type { RunEntry } from "../lib/site-types.ts";
+import { SIZES, sizeLabel } from "../lib/types.ts";
+import type { TradeoffPoint } from "../charts/tradeoff.ts";
+import DatasetCredit from "./DatasetCredit.astro";
+
+interface Props {
+  board: Board;
+}
+
+const { board } = Astro.props;
+const site = getSite();
+const runs = boardRuns(site, board);
+// Earlier seasons' runs not in this season yet: listed below the ranking, unranked.
+const older = board.olderRunIds.map((id) => site.runs[id]!);
+const seasons = site.seasons;
+const season = board.seasonStatus ? seasonById(seasons, board.judge.season) : undefined;
+const currentBoard =
+  board.seasonStatus === "past"
+    ? site.boards.find((b) => b.seasonStatus === "current" && scopeKey(b) === scopeKey(board))
+    : undefined;
+
+// One tab per dataset version (its first board); other boards of it at the same result size
+// are variants, and the size switch moves to the same runs at the other size.
+const datasetKey = (b: Board) => `${b.dataset.name}@${b.dataset.version}`;
+const tabs = site.boards.filter(
+  (b, i, all) => all.findIndex((x) => datasetKey(x) === datasetKey(b)) === i,
+);
+const variants = site.boards.filter(
+  (b) => datasetKey(b) === datasetKey(board) && b.size === board.size,
+);
+const sibling = otherSize(site.boards, board);
+const variantLabel = (b: Board) =>
+  [
+    scopeLabel(b),
+    judgeLabel(b.judge, seasons),
+    b.seasonStatus === "current" ? "current season" : null,
+    b.budget !== DEFAULT_BUDGET ? `${int(b.budget)}-token budget` : null,
+  ]
+    .filter(Boolean)
+    .join(", ");
+const href = (b: Board) => (b.slug === site.boards[0]?.slug ? "/" : `/boards/${b.slug}/`);
+
+const listed = [...runs, ...older];
+const categories = [
+  ...new Set(listed.flatMap((r) => Object.keys(r.result.metrics.by_category))),
+].sort();
+const systems = [...new Set(listed.map((r) => r.system))].sort();
+// Two table bodies: the ranked runs, then the earlier seasons' runs.
+const rows: { r: RunEntry; rank: number | null }[][] = [
+  runs.map((r, i) => ({ r, rank: i + 1 })),
+  older.map((r) => ({ r, rank: null })),
+];
+const olderNote = (r: RunEntry) => `${seasonName(seasons, r.result.judge.season)} · older rules`;
+// What the runner accepts: a hosted run of the full dataset, from a season it can re-judge.
+const rejudgeable = (r: RunEntry) =>
+  r.result.mode === "hosted" &&
+  !r.result.dataset.selection &&
+  canRejudge(seasons, r.result.judge.season);
+
+// Forest scale shared by every row, so the intervals can be compared down the column.
+const lows = listed.map((r) => r.result.metrics.overall.accuracy_ci95[0] * 100);
+const highs = listed.map((r) => r.result.metrics.overall.accuracy_ci95[1] * 100);
+const domain = listed.length
+  ? ([
+      Math.max(0, Math.floor((Math.min(...lows) - 2) / 10) * 10),
+      Math.min(100, Math.ceil((Math.max(...highs) + 2) / 10) * 10),
+    ] as const)
+  : ([0, 100] as const);
+const FOREST_WIDTH = 120;
+const at = (value: number) =>
+  ((value * 100 - domain[0]) / (domain[1] - domain[0] || 1)) * (FOREST_WIDTH - 8) + 4;
+
+const points: TradeoffPoint[] = runs.map((r, i) => {
+  const o = r.result.metrics.overall;
+  return {
+    id: r.id,
+    rank: i + 1,
+    label: r.label,
+    acc: o.accuracy,
+    lo: o.accuracy_ci95[0],
+    hi: o.accuracy_ci95[1],
+    tokens: o.context_tokens_mean,
+    latency: o.retrieval_latency_p50_s,
+  };
+});
+const boardData = JSON.stringify({ points }).replace(/</g, "\\u003c");
+---
+
+<header class="board-head">
+  <nav class="dataset-tabs" aria-label="Datasets">
+    {tabs.map((t) => (
+      <a href={href(t)} aria-current={datasetKey(t) === datasetKey(board) ? "page" : undefined}>
+        {t.title}
+      </a>
+    ))}
+  </nav>
+  {sibling && (
+    <nav class="sizes" aria-label="Results per question">
+      <span class="sizes-label">Results per question</span>
+      {SIZES.map((size) => {
+        const b = size === board.size ? board : sibling;
+        return (
+          <a href={href(b)} aria-current={size === board.size ? "page" : undefined}>
+            {sizeLabel(size)}
+          </a>
+        );
+      })}
+    </nav>
+  )}
+  {variants.length > 1 && (
+    <label class="field variant">
+      Which runs
+      <select data-board-variant>
+        {variants.map((v) => (
+          <option value={href(v)} selected={v.slug === board.slug}>
+            {variantLabel(v)}
+          </option>
+        ))}
+      </select>
+    </label>
+  )}
+</header>
+
+<section class="hero">
+  <h1>Which memory system returns the right context, and how much does it send?</h1>
+  <p class="lede">
+    Every system stores the same conversations, then retrieves context for each question. A judge
+    model reads only that context and rules whether the answer is in it. No answering model sits in
+    between, and every run is signed.
+  </p>
+  <p class="lede-note">
+    Every system that lets you choose its LLM runs GPT-6 Luna, so the memory design is compared, not
+    the model. Embedding models are each system's own. Each row shows the models it ran.{" "}
+    <a href="https://github.com/memjudge/memjudge/blob/main/docs/publishing-results.md#fairness-rules">
+      Fairness rules
+    </a>
+  </p>
+  <dl class="board-facts">
+    <div>
+      <dt>Questions</dt>
+      <dd>{scopeLabel(board)}</dd>
+    </div>
+    <div>
+      <dt>Judge</dt>
+      <dd>{judgeLabel(board.judge, seasons)}</dd>
+    </div>
+    {season && (
+      <div>
+        <dt>Season</dt>
+        <dd>
+          <a href={`/seasons/#season-${season.id}`}>{season.name}</a> · since {date(season.started)}
+          {board.seasonStatus === "current" ? " (current)" : ""}
+          {season.details && (
+            <>
+              {" · "}
+              <a href={season.details} rel="external">
+                Details ↗
+              </a>
+            </>
+          )}
+        </dd>
+      </div>
+    )}
+    <div>
+      <dt>Context budget</dt>
+      <dd>{int(board.budget)} tokens per question</dd>
+    </div>
+    <div>
+      <dt>Updated</dt>
+      <dd>{date(board.updated)}</dd>
+    </div>
+  </dl>
+  {board.seasonStatus === "past" && (
+    <p class="past-season" role="note">
+      This is a past season, judged with older rules. Compare results only within this table.
+      {currentBoard && (
+        <>
+          {" "}
+          <a href={href(currentBoard)}>Current season →</a>
+        </>
+      )}
+    </p>
+  )}
+</section>
+
+<section class="section tradeoff" aria-labelledby="tradeoff-title">
+  <div class="section-head">
+    <div>
+      <h2 id="tradeoff-title">Accuracy against tokens and latency</h2>
+      <p>
+        Each point is one run; the vertical line is its 95% confidence interval. Higher is more
+        accurate, further left sends fewer tokens or answers faster.
+      </p>
+    </div>
+    <div class="toggle" role="group" aria-label="Plot accuracy against">
+      <button type="button" aria-pressed="true" data-axis="tokens">
+        Context tokens
+      </button>
+      <button type="button" aria-pressed="false" data-axis="latency">
+        Latency
+      </button>
+    </div>
+  </div>
+  <div class="chart tradeoff-chart" data-tradeoff></div>
+  <p class="chart-note" data-tradeoff-note aria-live="polite"></p>
+  <script type="application/json" id="board-data" set:html={boardData} />
+</section>
+
+<section class="section ranking" aria-labelledby="ranking-title">
+  <div class="section-head">
+    <div>
+      <h2 id="ranking-title">Ranking</h2>
+      <p>
+        Ranked by accuracy. Where intervals overlap, the difference may be chance: compare the runs
+        to see the questions they disagree on.
+      </p>
+    </div>
+    <div class="ranking-controls">
+      {systems.length > 1 && (
+        <label class="field">
+          System
+          <select data-system-filter>
+            <option value="">All systems</option>
+            {systems.map((s) => (
+              <option value={s}>{s}</option>
+            ))}
+          </select>
+        </label>
+      )}
+      <label class="field sort-mobile">
+        Sort by
+        <select data-sort-select>
+          <option value="rank">Rank</option>
+          <option value="tokens">Fewest tokens</option>
+          <option value="eff">Accuracy per 1,000 tokens</option>
+          <option value="p50">Fastest</option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table class="data board-table">
+      <thead>
+        <tr>
+          <th class="n" aria-sort="ascending" data-sort="rank">
+            <button type="button">Rank</button>
+          </th>
+          <th>System</th>
+          <th class="acc-head" data-sort="acc">
+            <button type="button">Accuracy</button>
+            <span class="scale num" aria-hidden="true">
+              <span>{domain[0]}%</span>
+              <span>95% CI</span>
+              <span>{domain[1]}%</span>
+            </span>
+          </th>
+          <th class="n" data-sort="tokens">
+            <button type="button">Tokens per question</button>
+          </th>
+          <th class="n" data-sort="eff">
+            <button type="button">Accuracy per 1,000 tokens</button>
+          </th>
+          <th class="n" data-sort="p50">
+            <button type="button">Latency (median)</button>
+          </th>
+          <th>By category</th>
+          <th class="pick-head">Compare</th>
+        </tr>
+      </thead>
+      {rows.map((part, p) =>
+        p === 1 && part.length === 0 ? null : (
+          <tbody class={p === 1 ? "older" : undefined}>
+            {p === 0 && part.length === 0 && (
+              <tr class="note-row">
+                <td colspan="8">
+                  No runs in {season?.name ?? "this season"} yet. Runs from earlier seasons are
+                  listed below until they are re-judged.
+                </td>
+              </tr>
+            )}
+            {p === 1 && (
+              <tr class="note-row older-head">
+                <td colspan="8">
+                  <strong>Earlier seasons, not ranked.</strong> These runs were judged with older
+                  rules. Re-judging one moves it into {season?.name ?? "this season"}; it then
+                  appears in the ranking above.
+                </td>
+              </tr>
+            )}
+            {part.map(({ r, rank }) => {
+              const o = r.result.metrics.overall;
+              const [lo, hi] = o.accuracy_ci95;
+              return (
+                <tr
+                  data-system={r.system}
+                  data-rank={rank ?? ""}
+                  data-acc={o.accuracy}
+                  data-tokens={o.context_tokens_mean}
+                  data-eff={o.efficiency ?? ""}
+                  data-p50={o.retrieval_latency_p50_s ?? ""}
+                >
+                  <td class={`n rank${rank === null ? " unranked" : ""}`} data-label="Rank">
+                    {rank ?? "–"}
+                  </td>
+                  <td class="system">
+                    <a href={`/runs/${r.id}/`}>{r.label}</a>
+                    <span class="connector mono">{r.result.connector.id}</span>
+                    {modelsLabel(r.result.connector.models) && (
+                      <span class="connector">
+                        Models: {modelsLabel(r.result.connector.models)}
+                      </span>
+                    )}
+                    <span class="flags">
+                      {r.result.affiliation.affiliated === true && (
+                        <strong>
+                          Submitter affiliated
+                          {r.result.affiliation.system
+                            ? ` with ${r.result.affiliation.system}`
+                            : ""}
+                        </strong>
+                      )}
+                      {r.result.affiliation.affiliated === null && (
+                        <span>Affiliation not stated</span>
+                      )}
+                      {r.result.connector.label === "vendor-maintained" && (
+                        <span>Vendor-maintained connector</span>
+                      )}
+                      {r.notices.map((n) => (
+                        <span>{n}</span>
+                      ))}
+                      {rank === null && <strong class="season-badge">{olderNote(r)}</strong>}
+                    </span>
+                    {rank === null &&
+                      (rejudgeable(r) ? (
+                        <a
+                          class="button quiet rejudge"
+                          href={`/run/?rejudge=${r.result.signed_run_id}`}
+                          data-rejudge={r.result.signed_run_id}
+                        >
+                          Re-judge
+                        </a>
+                      ) : (
+                        <span class="rejudge-note">Needs a new run</span>
+                      ))}
+                  </td>
+                  <td class="acc" data-label="Accuracy (95% CI)">
+                    <div class="acc-cell">
+                      <span class="acc-value num">{pctNumber(o.accuracy)}</span>
+                      <span class="acc-detail">
+                        <svg
+                          class="forest"
+                          viewBox={`0 0 ${FOREST_WIDTH} 14`}
+                          width={FOREST_WIDTH}
+                          height="14"
+                          aria-hidden="true"
+                        >
+                          <line class="track" x1="4" x2={FOREST_WIDTH - 4} y1="7" y2="7" />
+                          <line class="interval" x1={at(lo)} x2={at(hi)} y1="7" y2="7" />
+                          <circle class="point" cx={at(o.accuracy)} cy="7" r="3.75" />
+                        </svg>
+                        <span class="ci num">
+                          {pctNumber(lo)} to {pctNumber(hi)}
+                        </span>
+                      </span>
+                    </div>
+                  </td>
+                  <td class="n" data-label="Tokens per question">
+                    {int(o.context_tokens_mean)}
+                  </td>
+                  <td class="n" data-label="Accuracy per 1,000 tokens">
+                    {fixed(o.efficiency)}
+                  </td>
+                  <td class="n" data-label="Latency, median">
+                    {secs(o.retrieval_latency_p50_s)}
+                  </td>
+                  <td class="cats" data-label="By category">
+                    <span
+                      class="cat-bars"
+                      role="img"
+                      aria-label={categories
+                        .map((c) => {
+                          const m = r.result.metrics.by_category[c];
+                          return m ? `${c} ${pctNumber(m.accuracy, 0)}%` : `${c} not run`;
+                        })
+                        .join(", ")}
+                    >
+                      {categories.map((c) => {
+                        const m = r.result.metrics.by_category[c];
+                        return (
+                          <span
+                            class="cat-bar"
+                            title={
+                              m
+                                ? `${c}: ${pctNumber(m.accuracy)}% (${m.correct} of ${m.questions})`
+                                : `${c}: not run`
+                            }
+                          >
+                            <span
+                              class="fill"
+                              style={`height:${m ? Math.max(4, m.accuracy * 100) : 0}%`}
+                            />
+                          </span>
+                        );
+                      })}
+                    </span>
+                  </td>
+                  <td class="pick">
+                    <label class="pick-label">
+                      <input type="checkbox" data-compare={r.id} data-label={r.label} />
+                      <span class="pick-text">Compare</span>
+                      <span class="visually-hidden">{r.label}</span>
+                    </label>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        ),
+      )}
+    </table>
+  </div>
+  <p class="chart-note">
+    By category, left to right: {categories.join(", ")}. Each bar is that category's accuracy.
+  </p>
+
+  <div class="compare-bar" data-compare-bar hidden>
+    <span data-compare-count aria-live="polite"></span>
+    <a class="button" href="/compare/" data-compare-link>
+      Compare
+    </a>
+    <button type="button" class="button quiet" data-compare-clear>
+      Clear
+    </button>
+  </div>
+</section>
+
+<DatasetCredit name={board.dataset.name} license={board.dataset.license} />
+
+<script>
+  import { initBoard } from "../client/board.ts";
+  initBoard();
+</script>
+
+<style>
+  .board-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+    margin-top: 1.75rem;
+  }
+
+  .dataset-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.5rem;
+  }
+
+  .dataset-tabs a {
+    padding-block: 0.4rem;
+    border-bottom: 2px solid transparent;
+    font-weight: 650;
+    text-decoration: none;
+    color: var(--ink-2);
+  }
+
+  .dataset-tabs a:hover {
+    color: var(--ink);
+  }
+
+  .dataset-tabs a[aria-current="page"] {
+    color: var(--ink);
+    border-bottom-color: var(--ink);
+  }
+
+  .sizes {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .sizes-label {
+    margin-right: 0.5rem;
+    color: var(--ink-2);
+  }
+
+  .sizes a {
+    padding: 0.3rem 0.75rem;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    text-decoration: none;
+    color: var(--ink-2);
+  }
+
+  .sizes a[aria-current="page"] {
+    border-color: var(--ink);
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .variant {
+    flex: 0 1 32rem;
+  }
+
+  .variant select {
+    width: 100%;
+  }
+
+  .hero {
+    margin-top: 2.5rem;
+  }
+
+  .hero h1,
+  .lede {
+    max-width: 50rem;
+  }
+
+  .lede {
+    margin-top: 1rem;
+    font-size: var(--t-18);
+    line-height: 1.55;
+    color: var(--ink-2);
+  }
+
+  .lede-note {
+    max-width: 50rem;
+    margin-top: 0.75rem;
+    font-size: var(--t-14);
+    color: var(--ink-2);
+  }
+
+  .board-facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 3rem;
+    margin-top: 1.75rem;
+    font-size: var(--t-14);
+  }
+
+  .board-facts dt {
+    color: var(--ink-2);
+  }
+
+  .tradeoff-chart {
+    height: clamp(22rem, 40vw, 28rem);
+  }
+
+  .ranking-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .board-table th,
+  .board-table td {
+    padding-inline: 0.5rem;
+  }
+
+  .board-table th:first-child,
+  .board-table td:first-child {
+    padding-left: 0;
+  }
+
+  .board-table th {
+    font-size: var(--t-12);
+    line-height: 1.35;
+  }
+
+  .board-table th button {
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    color: inherit;
+    text-align: inherit;
+    cursor: pointer;
+  }
+
+  .board-table th button:hover {
+    color: var(--ink);
+    text-decoration: underline;
+  }
+
+  .board-table th[aria-sort] button {
+    color: var(--ink);
+  }
+
+  .board-table th[aria-sort="ascending"] button::after {
+    content: " ↑";
+  }
+
+  .board-table th[aria-sort="descending"] button::after {
+    content: " ↓";
+  }
+
+  .acc-head .scale {
+    display: flex;
+    justify-content: space-between;
+    width: calc(2.75rem + 120px);
+    padding-left: 2.75rem;
+    margin-top: 0.25rem;
+    font-weight: 400;
+  }
+
+  .rank {
+    width: 2.25rem;
+    font-weight: 700;
+  }
+
+  th.n[data-sort="rank"] {
+    white-space: nowrap;
+  }
+
+  .system {
+    min-width: 13rem;
+  }
+
+  .system a {
+    font-weight: 700;
+    font-size: var(--t-16);
+  }
+
+  .system .connector {
+    display: block;
+    margin-top: 0.1rem;
+    color: var(--ink-2);
+    font-size: var(--t-12);
+  }
+
+  .flags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 0.75rem;
+    margin-top: 0.3rem;
+    font-size: var(--t-12);
+    color: var(--ink-2);
+  }
+
+  .flags strong {
+    color: var(--ink);
+    font-weight: 650;
+  }
+
+  .acc-cell {
+    display: flex;
+    gap: 0.25rem;
+    white-space: nowrap;
+  }
+
+  .acc-value {
+    width: 2.5rem;
+    font-size: var(--t-16);
+    font-weight: 700;
+  }
+
+  .forest {
+    display: block;
+    margin-top: 0.25rem;
+  }
+
+  .forest .track {
+    stroke: var(--rule);
+    stroke-width: 1;
+  }
+
+  .forest .interval {
+    stroke: var(--ink-2);
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+
+  .forest .point {
+    fill: var(--ink);
+  }
+
+  .acc .ci {
+    display: block;
+    margin-top: 0.1rem;
+    padding-left: 4px;
+    color: var(--ink-2);
+    font-size: var(--t-12);
+  }
+
+  .cat-bars {
+    display: inline-flex;
+    align-items: end;
+    gap: 3px;
+    height: 1.6rem;
+  }
+
+  .cat-bar {
+    position: relative;
+    width: 7px;
+    height: 100%;
+    background: var(--wash);
+    border-radius: 1px;
+  }
+
+  .cat-bar .fill {
+    position: absolute;
+    inset: auto 0 0;
+    background: var(--ink);
+    border-radius: 1px;
+  }
+
+  .pick-head {
+    text-align: center;
+  }
+
+  .pick {
+    text-align: center;
+  }
+
+  .pick-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    min-width: 2.25rem;
+    min-height: 2.25rem;
+    cursor: pointer;
+    color: var(--ink-2);
+  }
+
+  .pick-label input {
+    width: 1.05rem;
+    height: 1.05rem;
+    margin: 0;
+    accent-color: var(--ink);
+  }
+
+  .pick-text {
+    display: none;
+  }
+
+  .board-table tr.selected td {
+    background: var(--wash);
+  }
+
+  .compare-bar {
+    position: sticky;
+    bottom: 1rem;
+    z-index: 5;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1rem;
+    margin-top: 1.5rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--ink);
+    border-radius: var(--radius);
+    background: var(--paper);
+  }
+
+  .compare-bar [data-compare-count] {
+    margin-right: auto;
+    font-weight: 650;
+  }
+
+  .compare-bar[hidden] {
+    display: none;
+  }
+
+  .sort-mobile {
+    display: none;
+  }
+
+  .past-season {
+    max-width: 50rem;
+    margin-top: 1.25rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    background: var(--wash);
+    font-size: var(--t-14);
+  }
+
+  .note-row td {
+    padding-block: 1rem;
+    color: var(--ink-2);
+    font-size: var(--t-14);
+  }
+
+  .older-head td {
+    padding-top: 2rem;
+    border-bottom: 1px solid var(--ink);
+  }
+
+  .older-head strong {
+    color: var(--ink);
+  }
+
+  .older tr:not(.note-row) td {
+    color: var(--ink-2);
+  }
+
+  .unranked {
+    color: var(--ink-2);
+  }
+
+  .flags .season-badge {
+    padding: 0 0.35rem;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    font-weight: 600;
+  }
+
+  .rejudge {
+    display: inline-block;
+    margin-top: 0.5rem;
+    padding: 0.2rem 0.65rem;
+    font-size: var(--t-12);
+  }
+
+  .rejudge[aria-disabled="true"] {
+    pointer-events: none;
+    opacity: 0.6;
+  }
+
+  .rejudge-note {
+    display: block;
+    margin-top: 0.5rem;
+    color: var(--ink-2);
+    font-size: var(--t-12);
+  }
+
+  @media (max-width: 47.99rem) {
+    .sort-mobile {
+      display: inline-flex;
+    }
+
+    .board-table thead {
+      display: none;
+    }
+
+    .board-table,
+    .board-table tbody {
+      display: block;
+    }
+
+    .board-table tr {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem 1rem;
+      padding: 1.25rem 0;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .board-table td,
+    .board-table td:first-child {
+      display: block;
+      padding: 0;
+      border: 0;
+      text-align: left;
+    }
+
+    .board-table td.rank,
+    .board-table td.system,
+    .board-table td.acc,
+    .board-table td.cats,
+    .board-table td.pick {
+      grid-column: 1 / -1;
+    }
+
+    .board-table td.rank {
+      width: auto;
+      font-size: var(--t-14);
+      color: var(--ink-2);
+    }
+
+    .board-table td.rank::before {
+      content: "Rank ";
+      font-weight: 400;
+    }
+
+    .board-table td.rank.unranked {
+      font-size: 0;
+    }
+
+    .board-table td.rank.unranked::before {
+      content: "Not ranked";
+      font-size: var(--t-14);
+    }
+
+    .board-table tr.note-row {
+      display: block;
+    }
+
+    .board-table td.n:not(.rank)::before,
+    .board-table td.cats::before {
+      content: attr(data-label);
+      display: block;
+      font-size: var(--t-12);
+      color: var(--ink-2);
+    }
+
+    .board-table td.pick {
+      text-align: left;
+    }
+
+    .pick-label {
+      justify-content: flex-start;
+    }
+
+    .pick-text {
+      display: inline;
+    }
+  }
+</style>

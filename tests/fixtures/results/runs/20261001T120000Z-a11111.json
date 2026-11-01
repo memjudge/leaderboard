@@ -1,0 +1,445 @@
+{
+  "payload": {
+    "schema_version": "1",
+    "run_id": "20261001T120000Z-a11111",
+    "mode": "hosted",
+    "started_at": "2026-10-01T13:00:00Z",
+    "finished_at": "2026-10-01T13:07:00.123456Z",
+    "tool": {
+      "version": "0.1.0",
+      "commit": "0000000000000000000000000000000000000000",
+      "image_digest": null
+    },
+    "dataset": {
+      "name": "example",
+      "version": "v1",
+      "hash": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "curated": true,
+      "license": "CC-BY-4.0",
+      "upstream_sha256": null,
+      "errata_applied": 0,
+      "selection": null,
+      "conversation_ids": null,
+      "questions": 24
+    },
+    "connector": {
+      "id": "example/alpha",
+      "code_hash": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "target": "Alpha Memory (hosted API, v2)",
+      "label": "vendor-maintained",
+      "sdk": null,
+      "settings": {
+        "limit": 30,
+        "mode": "facts",
+        "timeout_s": 60
+      },
+      "endpoint": "https://api.example.org",
+      "custom_endpoint": false
+    },
+    "judge": {
+      "route": "anthropic",
+      "model": "claude-sonnet-5-5",
+      "upstream_provider": null,
+      "effort": "medium",
+      "max_output_tokens": 4000,
+      "prompt_version": "v1",
+      "prompt_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "served_by": [],
+      "official": true,
+      "season": "0-provisional"
+    },
+    "config": {
+      "budget_tokens": 8192,
+      "tokenizer": "o200k_base",
+      "concurrency": 4,
+      "judge_concurrency": 8
+    },
+    "metrics": {
+      "top10": {
+        "overall": {
+          "questions": 24,
+          "correct": 18,
+          "accuracy": 0.69,
+          "accuracy_ci95": [
+            0.536667,
+            0.843333
+          ],
+          "context_tokens_mean": 476.319,
+          "context_tokens_p95": 668.683,
+          "efficiency": 52.485785099868785,
+          "retrieval_latency_p50_s": 0.49647019999430936,
+          "retrieval_latency_p95_s": 0.6968778115729573,
+          "abstention_accuracy": {
+            "n": 6,
+            "value": 0.6666666666666666
+          },
+          "stale_fact_rate": {
+            "n": 0,
+            "value": null
+          },
+          "evidence_recall": {
+            "n": 0,
+            "value": null
+          },
+          "truncation_rate": 0.041666666666666664,
+          "flagged": 1,
+          "errors": 0
+        },
+        "by_category": {
+          "adversarial": {
+            "questions": 6,
+            "correct": 4,
+            "accuracy": 0.6666666666666666,
+            "accuracy_ci95": [
+              0.3333333333333333,
+              1.0
+            ],
+            "context_tokens_mean": 1450.6666666666667,
+            "context_tokens_p95": 2001.0,
+            "efficiency": 45.95588235294117,
+            "retrieval_latency_p50_s": 0.41538572887325487,
+            "retrieval_latency_p95_s": 0.677494080776692,
+            "abstention_accuracy": {
+              "n": 6,
+              "value": 0.6666666666666666
+            },
+            "stale_fact_rate": {
+              "n": 0,
+              "value": null
+            },
+            "evidence_recall": {
+              "n": 0,
+              "value": null
+            },
+            "truncation_rate": 0.16666666666666666,
+            "flagged": 0,
+            "errors": 0
+          },
+          "multi-hop": {
+            "questions": 6,
+            "correct": 4,
+            "accuracy": 0.6666666666666666,
+            "accuracy_ci95": [
+              0.3333333333333333,
+              1.0
+            ],
+            "context_tokens_mean": 1618.6666666666667,
+            "context_tokens_p95": 1889.25,
+            "efficiency": 41.18616144975287,
+            "retrieval_latency_p50_s": 0.4865644090734874,
+            "retrieval_latency_p95_s": 0.6867028273386765,
+            "abstention_accuracy": {
+              "n": 0,
+              "value": null
+            },
+            "stale_fact_rate": {
+              "n": 0,
+              "value": null
+            },
+            "evidence_recall": {
+              "n": 0,
+              "value": null
+            },
+            "truncation_rate": 0.0,
+            "flagged": 0,
+            "errors": 0
+          },
+          "single-hop": {
+            "questions": 6,
+            "correct": 4,
+            "accuracy": 0.6666666666666666,
+            "accuracy_ci95": [
+              0.3333333333333333,
+              1.0
+            ],
+            "context_tokens_mean": 1257.3333333333333,
+            "context_tokens_p95": 1800.25,
+            "efficiency": 53.022269353128316,
+            "retrieval_latency_p50_s": 0.6007078761733018,
+            "retrieval_latency_p95_s": 0.72404865679067,
+            "abstention_accuracy": {
+              "n": 0,
+              "value": null
+            },
+            "stale_fact_rate": {
+              "n": 0,
+              "value": null
+            },
+            "evidence_recall": {
+              "n": 0,
+              "value": null
+            },
+            "truncation_rate": 0.0,
+            "flagged": 1,
+            "errors": 0
+          },
+          "temporal": {
+            "questions": 6,
+            "correct": 6,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              1.0,
+              1.0
+            ],
+            "context_tokens_mean": 1389.1666666666667,
+            "context_tokens_p95": 1925.75,
+            "efficiency": 71.98560287942412,
+            "retrieval_latency_p50_s": 0.45738518006456763,
+            "retrieval_latency_p95_s": 0.5944260875399194,
+            "abstention_accuracy": {
+              "n": 0,
+              "value": null
+            },
+            "stale_fact_rate": {
+              "n": 0,
+              "value": null
+            },
+            "evidence_recall": {
+              "n": 0,
+              "value": null
+            },
+            "truncation_rate": 0.0,
+            "flagged": 0,
+            "errors": 0
+          }
+        },
+        "ingestion": {
+          "conversations": 3,
+          "sessions": 12,
+          "turns": 90,
+          "total_s": 43.5,
+          "per_turn_s": 0.48333333333333334,
+          "per_session_p50_s": 3.2,
+          "per_session_p95_s": 3.3,
+          "api_calls": 12,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "cost": {
+          "ingestion_usd": null,
+          "retrieval_usd": null,
+          "judge_usd": 0.0,
+          "total_usd": null,
+          "per_1k_questions_usd": null,
+          "ingestion_credits": null,
+          "retrieval_credits": null,
+          "judge_cost_source": "price-table"
+        },
+        "error_rate": {
+          "n": 36,
+          "value": 0.0
+        },
+        "flagged_question_ids": [
+          "c2:q2"
+        ]
+      },
+      "top30": {
+        "overall": {
+          "questions": 24,
+          "correct": 18,
+          "accuracy": 0.75,
+          "accuracy_ci95": [
+            0.5833333333333334,
+            0.9166666666666666
+          ],
+          "context_tokens_mean": 1428.9583333333333,
+          "context_tokens_p95": 2006.0500000000002,
+          "efficiency": 52.485785099868785,
+          "retrieval_latency_p50_s": 0.49647019999430936,
+          "retrieval_latency_p95_s": 0.6968778115729573,
+          "abstention_accuracy": {
+            "n": 6,
+            "value": 0.6666666666666666
+          },
+          "stale_fact_rate": {
+            "n": 0,
+            "value": null
+          },
+          "evidence_recall": {
+            "n": 0,
+            "value": null
+          },
+          "truncation_rate": 0.041666666666666664,
+          "flagged": 1,
+          "errors": 0
+        },
+        "by_category": {
+          "adversarial": {
+            "questions": 6,
+            "correct": 4,
+            "accuracy": 0.6666666666666666,
+            "accuracy_ci95": [
+              0.3333333333333333,
+              1.0
+            ],
+            "context_tokens_mean": 1450.6666666666667,
+            "context_tokens_p95": 2001.0,
+            "efficiency": 45.95588235294117,
+            "retrieval_latency_p50_s": 0.41538572887325487,
+            "retrieval_latency_p95_s": 0.677494080776692,
+            "abstention_accuracy": {
+              "n": 6,
+              "value": 0.6666666666666666
+            },
+            "stale_fact_rate": {
+              "n": 0,
+              "value": null
+            },
+            "evidence_recall": {
+              "n": 0,
+              "value": null
+            },
+            "truncation_rate": 0.16666666666666666,
+            "flagged": 0,
+            "errors": 0
+          },
+          "multi-hop": {
+            "questions": 6,
+            "correct": 4,
+            "accuracy": 0.6666666666666666,
+            "accuracy_ci95": [
+              0.3333333333333333,
+              1.0
+            ],
+            "context_tokens_mean": 1618.6666666666667,
+            "context_tokens_p95": 1889.25,
+            "efficiency": 41.18616144975287,
+            "retrieval_latency_p50_s": 0.4865644090734874,
+            "retrieval_latency_p95_s": 0.6867028273386765,
+            "abstention_accuracy": {
+              "n": 0,
+              "value": null
+            },
+            "stale_fact_rate": {
+              "n": 0,
+              "value": null
+            },
+            "evidence_recall": {
+              "n": 0,
+              "value": null
+            },
+            "truncation_rate": 0.0,
+            "flagged": 0,
+            "errors": 0
+          },
+          "single-hop": {
+            "questions": 6,
+            "correct": 4,
+            "accuracy": 0.6666666666666666,
+            "accuracy_ci95": [
+              0.3333333333333333,
+              1.0
+            ],
+            "context_tokens_mean": 1257.3333333333333,
+            "context_tokens_p95": 1800.25,
+            "efficiency": 53.022269353128316,
+            "retrieval_latency_p50_s": 0.6007078761733018,
+            "retrieval_latency_p95_s": 0.72404865679067,
+            "abstention_accuracy": {
+              "n": 0,
+              "value": null
+            },
+            "stale_fact_rate": {
+              "n": 0,
+              "value": null
+            },
+            "evidence_recall": {
+              "n": 0,
+              "value": null
+            },
+            "truncation_rate": 0.0,
+            "flagged": 1,
+            "errors": 0
+          },
+          "temporal": {
+            "questions": 6,
+            "correct": 6,
+            "accuracy": 1.0,
+            "accuracy_ci95": [
+              1.0,
+              1.0
+            ],
+            "context_tokens_mean": 1389.1666666666667,
+            "context_tokens_p95": 1925.75,
+            "efficiency": 71.98560287942412,
+            "retrieval_latency_p50_s": 0.45738518006456763,
+            "retrieval_latency_p95_s": 0.5944260875399194,
+            "abstention_accuracy": {
+              "n": 0,
+              "value": null
+            },
+            "stale_fact_rate": {
+              "n": 0,
+              "value": null
+            },
+            "evidence_recall": {
+              "n": 0,
+              "value": null
+            },
+            "truncation_rate": 0.0,
+            "flagged": 0,
+            "errors": 0
+          }
+        },
+        "ingestion": {
+          "conversations": 3,
+          "sessions": 12,
+          "turns": 90,
+          "total_s": 43.5,
+          "per_turn_s": 0.48333333333333334,
+          "per_session_p50_s": 3.2,
+          "per_session_p95_s": 3.3,
+          "api_calls": 12,
+          "input_tokens": null,
+          "output_tokens": null
+        },
+        "cost": {
+          "ingestion_usd": null,
+          "retrieval_usd": null,
+          "judge_usd": 0.0,
+          "total_usd": null,
+          "per_1k_questions_usd": null,
+          "ingestion_credits": null,
+          "retrieval_credits": null,
+          "judge_cost_source": "price-table"
+        },
+        "error_rate": {
+          "n": 36,
+          "value": 0.0
+        },
+        "flagged_question_ids": [
+          "c2:q2"
+        ]
+      }
+    },
+    "price_table_version": "2026-10-04",
+    "artifacts": [
+      {
+        "name": "conversations.jsonl",
+        "sha256": "sha256:7bbc89e7d59c11fd640bd0f90d387f1f127c30a64c531a8d9bc4c7a094f3f1de",
+        "url": "https://artifacts.example.org/runs/20261001T120000Z-a11111/conversations.jsonl"
+      },
+      {
+        "name": "questions-top10.jsonl",
+        "sha256": "sha256:763e5f5c24dd9f1ca7bddbaee33afa1619d2858e59de1cc290adbcde69bd8279",
+        "url": "https://artifacts.example.org/runs/20261001T120000Z-a11111/questions-top10.jsonl"
+      },
+      {
+        "name": "questions-top30.jsonl",
+        "sha256": "sha256:06336b40668c0f2247b6fa31e59448f33989ec11b1e93a0c1596f23c200719e8",
+        "url": "https://artifacts.example.org/runs/20261001T120000Z-a11111/questions-top30.jsonl"
+      }
+    ],
+    "affiliation": {
+      "affiliated": true,
+      "system": "Example"
+    },
+    "reused_ingestion": null,
+    "key_id": "354ba5be4e44ca1e"
+  },
+  "signature": {
+    "alg": "Ed25519",
+    "key_id": "354ba5be4e44ca1e",
+    "value": "/m5aEAUsNLzNhmZM/lpBHnVgX6qTKoUrHt+/8lEDET79UancnPqCbvz2ZfJW+IhxYtIBCepjd9iIz7j6fJLmAw=="
+  }
+}

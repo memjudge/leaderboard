@@ -1,0 +1,455 @@
+/* Run page and compare page: charts, verdict quilt, question list, head to head. */
+
+.where-grid {
+  display: grid;
+  gap: 1.5rem 3rem;
+  align-items: start;
+}
+
+@media (min-width: 64rem) {
+  .where-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+.latency-chart,
+.cmp-tradeoff {
+  height: 22rem;
+}
+
+/* ---- verdict quilt ---- */
+.quilt {
+  --cell: 12px;
+  --gap: 3px;
+  position: relative;
+  display: grid;
+  gap: 1.25rem 2.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+  margin-top: 1rem;
+}
+
+.quilt.q3,
+.quilt.q4 {
+  --cell: 14px;
+}
+
+@media (max-width: 30rem) {
+  .quilt {
+    --cell: 11px;
+  }
+}
+
+.quilt-label {
+  font-size: var(--t-14);
+  font-weight: 700;
+  margin-bottom: 0.45rem;
+}
+
+.quilt-label .muted {
+  font-weight: 400;
+  margin-left: 0.4rem;
+}
+
+.quilt-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap);
+}
+
+.cell {
+  position: relative;
+  display: inline-block;
+  width: var(--cell);
+  height: var(--cell);
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--ink-3);
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+/* one run: filled, hollow or hatched */
+.q1 .cell.r0 {
+  background: var(--ink);
+  box-shadow: none;
+}
+
+.q1 .cell.x0 {
+  background: repeating-linear-gradient(135deg, var(--ink-3) 0 1.5px, transparent 1.5px 3.5px);
+}
+
+/* several runs: one part per run, filled in the run's colour where it was correct;
+   a part without a verdict is grey */
+.q2 .cell,
+.q3 .cell,
+.q4 .cell {
+  --a: transparent;
+  --b: transparent;
+  --c: transparent;
+  --d: transparent;
+}
+
+.cell.r0 {
+  --a: var(--run-a);
+}
+.cell.r1 {
+  --b: var(--run-b);
+}
+.cell.r2 {
+  --c: var(--run-c);
+}
+.cell.r3 {
+  --d: var(--run-d);
+}
+.cell.x0 {
+  --a: var(--ink-3);
+}
+.cell.x1 {
+  --b: var(--ink-3);
+}
+.cell.x2 {
+  --c: var(--ink-3);
+}
+.cell.x3 {
+  --d: var(--ink-3);
+}
+
+.q2 .cell {
+  background: linear-gradient(to right, var(--a) 50%, var(--b) 50%), var(--paper);
+}
+
+.q3 .cell {
+  background:
+    linear-gradient(to right, var(--a) 33.34%, var(--b) 33.34% 66.67%, var(--c) 66.67%),
+    var(--paper);
+}
+
+.q4 .cell {
+  background:
+    linear-gradient(var(--a), var(--a)) 0 0 / 50% 50% no-repeat,
+    linear-gradient(var(--b), var(--b)) 100% 0 / 50% 50% no-repeat,
+    linear-gradient(var(--c), var(--c)) 0 100% / 50% 50% no-repeat,
+    linear-gradient(var(--d), var(--d)) 100% 100% / 50% 50% no-repeat,
+    var(--paper);
+}
+
+/* flagged by the judge: a ring in the corner, visible on filled and hollow squares */
+.cell.flag::after {
+  content: "";
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: 0 0 0 1.5px var(--ink);
+}
+
+.cell.dim {
+  opacity: 0.16;
+}
+
+.cell.selected {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.cell:hover {
+  outline: 1px solid var(--ink);
+  outline-offset: 1px;
+}
+
+.cell:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  z-index: 1;
+}
+
+.quilt-tip {
+  position: absolute;
+  z-index: 4;
+  display: grid;
+  gap: 0.2rem;
+  width: max-content;
+  max-width: min(20rem, 90vw);
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+  font-size: var(--t-12);
+  line-height: 1.45;
+  pointer-events: none;
+}
+
+.quilt-tip[hidden] {
+  display: none;
+}
+
+.tip-q {
+  font-size: var(--t-14);
+  font-weight: 650;
+}
+
+.tip-meta {
+  color: var(--ink-2);
+}
+
+.tip-runs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.75rem;
+}
+
+.quilt-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.5rem;
+  font-size: var(--t-14);
+  color: var(--ink-2);
+}
+
+.quilt-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.cell.sample {
+  --cell: 14px;
+  cursor: default;
+}
+
+.legend-note {
+  flex-basis: 100%;
+}
+
+/* ---- filters and list ---- */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.75rem 1rem;
+  margin-top: 2.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--rule);
+}
+
+.filters .search {
+  flex: 1 1 16rem;
+}
+
+.filters .search input {
+  width: 100%;
+}
+
+.question-list {
+  margin-top: 1rem;
+  scroll-margin-top: 1rem;
+}
+
+.list-count {
+  font-size: var(--t-14);
+  color: var(--ink-2);
+}
+
+.list-count .link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--ink);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.q {
+  padding-block: 1.5rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.q-text {
+  max-width: var(--measure);
+}
+
+.q-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0;
+  margin-top: 0.35rem;
+  font-size: var(--t-12);
+  color: var(--ink-2);
+}
+
+.q-meta .sep {
+  width: 1px;
+  margin-inline: 0.6rem;
+  background: var(--rule);
+}
+
+.q-gold {
+  margin-top: 0.75rem;
+}
+
+.q-gold-label {
+  display: inline-block;
+  margin-right: 0.5rem;
+  font-size: var(--t-12);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+.q-runs {
+  display: grid;
+  gap: 1rem 2rem;
+  margin-top: 1rem;
+}
+
+.q-runs.compared {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+}
+
+.q-runs.compared .q-run {
+  padding-top: 0.75rem;
+  border-top: 2px solid var(--rule);
+}
+
+.q-run-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+}
+
+.run-name {
+  font-size: var(--t-14);
+  font-weight: 650;
+}
+
+.q-reason {
+  margin-top: 0.5rem;
+}
+
+.q-error {
+  margin-top: 0.5rem;
+  font-family: var(--mono);
+  font-size: var(--t-12);
+  color: var(--ink-2);
+}
+
+.q-notes {
+  margin-top: 0.35rem;
+  font-size: var(--t-12);
+  color: var(--ink-2);
+}
+
+.ctx-toggle {
+  margin-top: 0.5rem;
+  padding: 0.15rem 0;
+  border: 0;
+  background: none;
+  font-size: var(--t-14);
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.ctx {
+  max-height: 22rem;
+  overflow: auto;
+  margin-top: 0.5rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--wash);
+  font-size: var(--t-12);
+}
+
+.question-list .more {
+  margin-top: 1.25rem;
+}
+
+/* ---- head to head ---- */
+.pairs {
+  display: grid;
+  gap: 1.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pair-names {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  font-weight: 650;
+}
+
+.pair-names .vs {
+  font-weight: 400;
+  color: var(--ink-2);
+}
+
+.pair-bar {
+  display: flex;
+  gap: 2px;
+  height: 10px;
+  margin-top: 0.6rem;
+  max-width: 40rem;
+}
+
+.pair-bar span {
+  border-radius: 2px;
+  min-width: 0;
+}
+
+.pair-bar .same {
+  background: var(--wash);
+}
+
+.pair-counts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 1.25rem;
+  margin-top: 0.6rem;
+  font-size: var(--t-14);
+}
+
+.pair-counts .count {
+  padding: 0.2rem 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.pair-counts .count strong {
+  font-size: var(--t-16);
+}
+
+.pair-counts .agree,
+.pair-counts .p {
+  color: var(--ink-2);
+}
+
+.category-table th[scope="row"],
+.category-table td:first-child {
+  white-space: nowrap;
+  font-weight: 400;
+  color: var(--ink);
+}
+
+.cell-sub {
+  display: block;
+  font-size: var(--t-12);
+  color: var(--ink-2);
+}

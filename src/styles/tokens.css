@@ -1,0 +1,77 @@
+/*
+ * MemJudge design tokens. The interface is ink on paper; colour appears only where it
+ * identifies a compared run (A to D). Run colours pass the dataviz colour-blindness
+ * checks in both themes (all pairs); every run also carries a letter and a marker shape.
+ */
+:root {
+  color-scheme: light;
+  --paper: #fbfcfd;
+  --ink: #142b44;
+  --ink-2: #4f6276;
+  /* outlines of hollow marks: at least 3:1 against paper and wash */
+  --ink-3: #75869a;
+  --rule: #d6dde5;
+  --wash: #eef2f6;
+  --run-a: #2a78d6;
+  --run-b: #eb6834;
+  --run-c: #1baf7a;
+  --run-d: #8b3473;
+
+  --font:
+    "Atkinson Hyperlegible Next Variable", "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --mono:
+    "Atkinson Hyperlegible Mono Variable", "Atkinson Hyperlegible Mono", ui-monospace, monospace;
+
+  /* type scale (px): 12 14 16 18 21 24 36 */
+  --t-12: 0.75rem;
+  --t-14: 0.875rem;
+  --t-16: 1rem;
+  --t-18: 1.125rem;
+  --t-21: 1.3125rem;
+  --t-24: 1.5rem;
+  --t-36: 2.25rem;
+
+  --measure: 70ch;
+  --page: 75rem;
+  --gutter: 1rem;
+  --space: 1.5rem;
+  --section: 3.5rem;
+  --radius: 4px;
+}
+
+@media (min-width: 48rem) {
+  :root {
+    --gutter: 2rem;
+    --section: 4.5rem;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --paper: #14202b;
+    --ink: #e3eaf2;
+    --ink-2: #9fb0c2;
+    --ink-3: #6c7f93;
+    --rule: #2a3a4b;
+    --wash: #1b2a38;
+    --run-a: #3987e5;
+    --run-b: #d95926;
+    --run-c: #199e70;
+    --run-d: #9c509a;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #14202b;
+  --ink: #e3eaf2;
+  --ink-2: #9fb0c2;
+  --ink-3: #6c7f93;
+  --rule: #2a3a4b;
+  --wash: #1b2a38;
+  --run-a: #3987e5;
+  --run-b: #d95926;
+  --run-c: #199e70;
+  --run-d: #9c509a;
+}

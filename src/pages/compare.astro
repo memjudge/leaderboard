@@ -1,0 +1,193 @@
+---
+import RunsView from "../components/RunsView.astro";
+import Base from "../layouts/Base.astro";
+import type { RunIndexEntry } from "../lib/site-types.ts";
+import { boardRuns, getSite } from "../lib/site.ts";
+import { sizeLabel } from "../lib/types.ts";
+
+const site = getSite();
+// A small index of every listed run, for naming the chosen runs and "Add a run".
+const index: RunIndexEntry[] = site.boards.flatMap((b) =>
+  boardRuns(site, b)
+    .filter((r) => r.dataFile)
+    .map((r) => ({
+      id: r.id,
+      label: r.label,
+      board: b.slug,
+      boardTitle: `${b.title}${b.conversations ? `, ${b.conversations.length === 1 ? b.conversations[0] : `${b.conversations.length} conversations`}` : ""}, ${sizeLabel(b.size)}`,
+      accuracy: r.result.metrics.overall.accuracy,
+    })),
+);
+const indexJson = JSON.stringify(index).replace(/</g, "\\u003c");
+---
+
+<Base
+  title="Compare runs: MemJudge"
+  description="Compare up to four memory-system runs question by question: where each one is right, where they disagree, and how many tokens each sends."
+  current="compare"
+>
+  <header class="compare-head">
+    <h1>Compare runs</h1>
+    <p class="lede">
+      Up to four runs side by side, down to every question: where each one finds the answer, where
+      they disagree, and what each spends to get there.
+    </p>
+  </header>
+
+  <div class="picker" data-picker>
+    <ul class="chips" data-chips></ul>
+    <label class="field add">
+      Add a run
+      <select data-add>
+        <option value="">Choose a run</option>
+      </select>
+    </label>
+  </div>
+  <p class="warning" data-warning hidden></p>
+
+  <section class="empty" data-empty hidden>
+    <h2>Pick two to four runs</h2>
+    <p>
+      Choose runs above, or tick them in the leaderboard's Compare column. Runs on the same board
+      answered the same questions with the same judge, so they compare question by question.
+    </p>
+  </section>
+
+  <div data-compare hidden>
+    <section class="section" aria-labelledby="side-title">
+      <div class="section-head">
+        <div>
+          <h2 id="side-title">Side by side</h2>
+          <p>The best value in each row is in bold.</p>
+        </div>
+      </div>
+      <div class="table-wrap" data-side></div>
+    </section>
+
+    <RunsView mode="compare" />
+  </div>
+
+  <script type="application/json" id="run-index" set:html={indexJson} />
+</Base>
+
+<script>
+  import { initCompare } from "../client/compare.ts";
+  void initCompare();
+</script>
+
+<style>
+  .compare-head {
+    margin-top: 2.5rem;
+    max-width: 48rem;
+  }
+
+  .lede {
+    margin-top: 1rem;
+    font-size: var(--t-18);
+    color: var(--ink-2);
+  }
+
+  .picker {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 1rem 1.5rem;
+    margin-top: 2rem;
+  }
+
+  .add select {
+    max-width: min(100%, 30rem);
+  }
+
+  .warning {
+    margin-top: 1rem;
+    max-width: var(--measure);
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--ink);
+    border-radius: var(--radius);
+  }
+
+  .warning[hidden] {
+    display: none;
+  }
+
+  .empty {
+    margin-top: 3rem;
+    max-width: 40rem;
+  }
+
+  .empty p {
+    margin-top: 0.75rem;
+    color: var(--ink-2);
+  }
+</style>
+
+<style is:global>
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.5rem;
+    padding: 0.3rem 0.4rem 0.3rem 0.75rem;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+  }
+
+  .chip a {
+    font-weight: 650;
+  }
+
+  .chip button {
+    display: inline-grid;
+    place-items: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+    color: var(--ink-2);
+    font-size: var(--t-18);
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .chip button:hover {
+    background: var(--wash);
+    color: var(--ink);
+  }
+
+  .side-table th .run-key {
+    margin-bottom: 0.3rem;
+  }
+
+  .side-table th .run-label {
+    display: block;
+    font-weight: 650;
+    color: var(--ink);
+  }
+
+  .side-table td.best {
+    font-weight: 800;
+  }
+
+  .side-table tbody th {
+    font-weight: 400;
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+
+  .side-table .group th {
+    padding-top: 1.25rem;
+    color: var(--ink);
+    font-weight: 700;
+  }
+</style>

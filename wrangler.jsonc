@@ -1,0 +1,17 @@
+// Cloudflare Workers static assets: the built site in ./dist, no Worker code.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "memjudge-leaderboard",
+  "compatibility_date": "2026-10-07",
+  // Preview links per version stay off, so only released builds are served.
+  "workers_dev": true,
+  "preview_urls": false,
+  // Added in the dashboard first (the deploy token can't create domains); listed here so
+  // deploys keep it.
+  "routes": [{ "pattern": "memjudge.org", "custom_domain": true }],
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "404-page",
+    "html_handling": "auto-trailing-slash",
+  },
+}

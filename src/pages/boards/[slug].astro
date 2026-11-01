@@ -1,0 +1,24 @@
+---
+import BoardView from "../../components/BoardView.astro";
+import Base from "../../layouts/Base.astro";
+import { scopeLabel } from "../../lib/boards.ts";
+import { getSite } from "../../lib/site.ts";
+import { sizeLabel } from "../../lib/types.ts";
+
+export function getStaticPaths() {
+  // The first board is the home page; the others get their own address.
+  return getSite()
+    .boards.slice(1)
+    .map((board) => ({ params: { slug: board.slug }, props: { board } }));
+}
+
+const { board } = Astro.props;
+---
+
+<Base
+  title={`${board.title}, ${scopeLabel(board).toLowerCase()}, ${sizeLabel(board.size)}: MemJudge`}
+  description={`MemJudge results for ${board.title}, ${sizeLabel(board.size)}: accuracy against context tokens and latency.`}
+  current="leaderboard"
+>
+  <BoardView board={board} />
+</Base>

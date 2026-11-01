@@ -1,0 +1,25 @@
+---
+import Base from "../layouts/Base.astro";
+---
+
+<Base title="Page not found: MemJudge" description="This page does not exist.">
+  <section class="missing">
+    <h1>This page does not exist</h1>
+    <p>
+      The address may be mistyped, or the run may have been removed. Runs are listed on the
+      <a href="/">leaderboard</a>.
+    </p>
+  </section>
+</Base>
+
+<style>
+  .missing {
+    margin-top: 4rem;
+    max-width: 36rem;
+  }
+
+  .missing p {
+    margin-top: 1rem;
+    color: var(--ink-2);
+  }
+</style>

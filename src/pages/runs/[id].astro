@@ -1,0 +1,325 @@
+---
+import DatasetCredit from "../../components/DatasetCredit.astro";
+import Provenance from "../../components/Provenance.astro";
+import RunFigures from "../../components/RunFigures.astro";
+import RunsView from "../../components/RunsView.astro";
+import Base from "../../layouts/Base.astro";
+import { boardBySlug, boardRuns, getSite } from "../../lib/site.ts";
+import { scopeLabel } from "../../lib/boards.ts";
+import { ci, date, dateTime, int, pctNumber, shortHash } from "../../lib/format.ts";
+import { targetDetail } from "../../lib/naming.ts";
+import { historyRows } from "../../lib/results.ts";
+import { seasonName } from "../../lib/seasons.ts";
+import type { RunEntry } from "../../lib/site-types.ts";
+import { SIZES, sizeLabel } from "../../lib/types.ts";
+
+type Props = { run: RunEntry } | { forward: string };
+
+export function getStaticPaths() {
+  const runs = Object.values(getSite().runs);
+  // A run's own id (`/runs/<run id>/`, the runner's result link) forwards to its Top 30 page.
+  const signed = [...new Set(runs.map((run) => run.result.signed_run_id))];
+  return [
+    ...runs.map((run) => ({ params: { id: run.id }, props: { run } })),
+    ...signed.map((id) => ({ params: { id }, props: { forward: `/runs/${id}-top30/` } })),
+  ];
+}
+
+if ("forward" in Astro.props) return Astro.redirect(Astro.props.forward, 301);
+const { run } = Astro.props;
+const site = getSite();
+const board = boardBySlug(site, run.board);
+const r = run.result;
+const o = r.metrics.overall;
+const boardHref = board.slug === site.boards[0]?.slug ? "/" : `/boards/${board.slug}/`;
+const rank = board.runIds.indexOf(run.id) + 1;
+const detail = targetDetail(r.connector.target);
+const categories = Object.keys(r.metrics.by_category).sort();
+// Every run of this connector on this board stays listed, so a re-run never hides an earlier one.
+const otherRuns = boardRuns(site, board)
+  .filter((x) => x.id !== run.id && x.result.connector.id === r.connector.id)
+  .sort((a, b) => b.result.finished_at.localeCompare(a.result.finished_at));
+// The same run at the other result size (ADR 0018).
+const sizes = SIZES.map((size) => ({ size, entry: site.runs[`${r.signed_run_id}-${size}`] }));
+// A re-judge links to the run it judged again, and that run to its re-judges, at this size.
+const rejudgedFrom = r.rejudged_from ? site.runs[`${r.rejudged_from.run_id}-${r.size}`] : undefined;
+const rejudges = Object.values(site.runs).filter(
+  (x) => x.result.rejudged_from?.run_id === r.signed_run_id && x.result.size === r.size,
+);
+const history = historyRows(r);
+const report = new URL("https://github.com/memjudge/memjudge/issues/new");
+report.searchParams.set("template", "result_dispute.yml");
+report.searchParams.set("title", `Result ${run.id}`);
+report.searchParams.set("run", `https://memjudge.org/runs/${run.id}/`);
+---
+
+<Base
+  title={`${run.label}, ${board.title}, ${sizeLabel(r.size)}: MemJudge`}
+  description={`${run.label} on ${board.title}, ${sizeLabel(r.size)}: ${pctNumber(o.accuracy)}% accuracy at ${int(o.context_tokens_mean)} context tokens per question.`}
+  current="leaderboard"
+>
+  <p class="crumbs">
+    <a href={boardHref}>
+      {board.title}, {scopeLabel(board).toLowerCase()}, {sizeLabel(r.size)}
+    </a>
+    <span class="muted">
+      {seasonName(site.seasons, r.judge.season)}
+      {board.seasonStatus === "past" ? " (past season)" : ""} · Rank {rank} of {board.runIds.length}
+    </span>
+  </p>
+
+  <header class="run-head">
+    <h1>{run.label}</h1>
+    <p class="target">
+      {run.system}
+      {detail ? ` (${detail})` : ""}
+      <span class="mono muted">{r.connector.id}</span>
+    </p>
+    <nav class="sizes" aria-label="Results per question">
+      <span class="muted">Results per question</span>
+      {sizes.map(({ size, entry }) =>
+        size === r.size || !entry ? (
+          <span aria-current={size === r.size ? "page" : undefined}>{sizeLabel(size)}</span>
+        ) : (
+          <a href={`/runs/${entry.id}/`}>{sizeLabel(size)}</a>
+        ),
+      )}
+    </nav>
+    <ul class="tags">
+      <li class="tag strong">Signature valid, key {run.keyId}</li>
+      {r.connector.label === "vendor-maintained" && (
+        <li class="tag">Vendor-maintained connector</li>
+      )}
+      {r.affiliation.affiliated === true && (
+        <li class="tag strong">
+          Submitter affiliated{r.affiliation.system ? ` with ${r.affiliation.system}` : ""}
+        </li>
+      )}
+      {r.affiliation.affiliated === false && <li class="tag">Submitter not affiliated</li>}
+      {r.affiliation.affiliated === null && <li class="tag">Affiliation not stated</li>}
+      {run.notices.map((n) => (
+        <li class="tag">{n}</li>
+      ))}
+      {r.rejudged_from && (
+        <li class="tag strong">
+          Re-judged from{" "}
+          {rejudgedFrom ? (
+            <a href={`/runs/${rejudgedFrom.id}/`}>run {r.rejudged_from.run_id}</a>
+          ) : (
+            <span class="mono">run {r.rejudged_from.run_id}</span>
+          )}{" "}
+          ({seasonName(site.seasons, r.rejudged_from.season)})
+        </li>
+      )}
+      {rejudges.map((x) => (
+        <li class="tag strong">
+          <a href={`/runs/${x.id}/`}>
+            Re-judged into {seasonName(site.seasons, x.result.judge.season)} →
+          </a>
+        </li>
+      ))}
+    </ul>
+    {history.length > 0 && (
+      <details class="run-history">
+        <summary>
+          Run history
+          {r.rejudged_from && <span class="muted"> (of the run it re-judged)</span>}
+        </summary>
+        <ol>
+          {history.map((h) => (
+            <li>
+              <span class="muted num">{dateTime(h.at)}</span> {h.text}
+            </li>
+          ))}
+        </ol>
+        <p class="muted small">
+          Recorded by the runner. Completed conversations were kept on resume; unfinished ones were
+          redone.
+        </p>
+      </details>
+    )}
+    <p class="report">
+      <a href={report.href}>Report a problem with this result</a>
+      <span class="muted">
+        {" "}
+        (see the <a href="/corrections/">corrections policy</a>)
+      </span>
+    </p>
+  </header>
+
+  <p class="ruling">
+    The judge ruled the retrieved context correct for{" "}
+    <strong>
+      {int(o.correct)} of {int(o.questions)} questions
+    </strong>{" "}
+    (<strong>{pctNumber(o.accuracy)}%</strong>, 95% CI {ci(o.accuracy_ci95)}), using{" "}
+    <strong>{int(o.context_tokens_mean)} tokens</strong> per question on average.
+    {o.errors > 0 && (
+      <span class="errors">
+        {o.errors === o.questions
+          ? `No question got a verdict: every call failed, so the run scores zero.`
+          : `${int(o.errors)} ${o.errors === 1 ? "question" : "questions"} got no verdict because a call failed; they count as incorrect.`}
+      </span>
+    )}
+  </p>
+
+  <RunFigures run={run} sizes={sizes.flatMap(({ entry }) => (entry ? [entry] : []))} />
+
+  <RunsView mode="run" runIds={run.dataFile ? [run.id] : []} single={run}>
+    <table class="data category-table" slot="category-table">
+      <caption class="visually-hidden">Accuracy by category</caption>
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th class="n">Correct</th>
+          <th class="n">Accuracy</th>
+          <th class="n">95% CI</th>
+          <th class="n">Tokens</th>
+          <th class="n">No verdict</th>
+        </tr>
+      </thead>
+      <tbody>
+        {categories.map((c) => {
+          const m = r.metrics.by_category[c]!;
+          return (
+            <tr>
+              <th scope="row">{c}</th>
+              <td class="n">
+                {int(m.correct)} of {int(m.questions)}
+              </td>
+              <td class="n">{pctNumber(m.accuracy)}%</td>
+              <td class="n muted">{ci(m.accuracy_ci95)}</td>
+              <td class="n">{int(m.context_tokens_mean)}</td>
+              <td class="n">{int(m.errors)}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  </RunsView>
+
+  {otherRuns.length > 0 && (
+    <section class="section" id="other-runs" aria-labelledby="other-runs-title">
+      <div class="section-head">
+        <div>
+          <h2 id="other-runs-title">Other runs of this connector</h2>
+          <p>
+            Earlier and later runs on this board stay listed. A different code hash means the
+            connector code changed between runs.
+          </p>
+        </div>
+      </div>
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Finished</th>
+            <th>Run</th>
+            <th>Code hash</th>
+            <th class="n">Accuracy</th>
+          </tr>
+        </thead>
+        <tbody>
+          {otherRuns.map((x) => (
+            <tr>
+              <td>{date(x.result.finished_at)}</td>
+              <td>
+                <a href={`/runs/${x.id}/`}>{x.label}</a>
+              </td>
+              <td class="mono">{shortHash(x.result.connector.code_hash)}</td>
+              <td class="n">{pctNumber(x.result.metrics.overall.accuracy)}%</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  )}
+
+  <Provenance run={run} />
+  <DatasetCredit name={r.dataset.name} license={r.dataset.license} />
+</Base>
+
+<style>
+  .crumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    margin-top: 1.75rem;
+    font-size: var(--t-14);
+  }
+
+  .run-head {
+    margin-top: 1.25rem;
+  }
+
+  .target {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.75rem;
+    margin-top: 0.5rem;
+    color: var(--ink-2);
+  }
+
+  .sizes {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.75rem;
+    margin-top: 0.75rem;
+    font-size: var(--t-14);
+  }
+
+  .sizes [aria-current="page"] {
+    font-weight: 650;
+  }
+
+  .run-head .tags {
+    margin-top: 1rem;
+  }
+
+  .report {
+    margin-top: 0.75rem;
+    font-size: var(--t-14);
+  }
+
+  .run-history {
+    margin-top: 0.75rem;
+    font-size: var(--t-14);
+  }
+
+  .run-history summary {
+    cursor: pointer;
+    font-weight: 650;
+  }
+
+  .run-history ol {
+    margin: 0.5rem 0;
+    padding-left: 1.25rem;
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  .ruling {
+    margin-top: 2rem;
+    max-width: 46rem;
+    font-size: var(--t-21);
+    line-height: 1.45;
+  }
+
+  .ruling strong {
+    font-weight: 750;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ruling .errors {
+    display: block;
+    margin-top: 0.75rem;
+    font-size: var(--t-16);
+    color: var(--ink-2);
+  }
+
+  @media (min-width: 48rem) {
+    .ruling {
+      font-size: var(--t-24);
+    }
+  }
+</style>

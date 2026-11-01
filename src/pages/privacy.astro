@@ -1,0 +1,109 @@
+---
+import Base from "../layouts/Base.astro";
+---
+
+<Base
+  title="Privacy notice: MemJudge"
+  description="What personal data MemJudge handles, why, for how long, and your rights."
+>
+  <article class="legal">
+    <h1>Privacy notice</h1>
+    <p class="muted">Last updated 28 October 2026</p>
+    <p>
+      MemJudge collects as little personal data as it can. You can read the whole site without
+      signing in, and it uses no analytics, adverts or tracking cookies.
+    </p>
+
+    <h2>1. Who is responsible</h2>
+    <p>
+      Bit Robotics Ltd (company number 11680576, registered office 13 Freeland Park, Wareham Road,
+      Lytchett House, Poole, Dorset, BH16 6FA) is responsible for your data. Contact:{" "}
+      <a href="mailto:admin@memjudge.org">admin@memjudge.org</a>.
+    </p>
+
+    <h2>2. What we handle, and why</h2>
+    <ul>
+      <li>
+        <strong>Visiting the site.</strong> Cloudflare, which hosts the site, processes your IP
+        address and request details to deliver the pages and protect them from attacks. Your browser
+        keeps your theme choice and, on the Run page, your sign-in for that tab and the id of your
+        last run. These stay on your device and only make the features you use work, so we do not
+        ask for cookie consent.
+      </li>
+      <li>
+        <strong>Signing in.</strong> GitHub shares your public profile when you sign in. We use only
+        your numeric account id, and we store only a keyed hash of it: never the id itself, your
+        username, name or email.
+      </li>
+      <li>
+        <strong>Starting a run.</strong> We keep a run record: that hash, the run's settings and
+        progress, your affiliation answer, the date of the terms you agreed to, and timestamps. The
+        runner's request logs record your IP address. Your API keys are encrypted for the run's
+        jobs, deleted when a job reads them (unused ones within 3 days) and never logged. The jobs
+        log their progress with your keys removed; only you see those lines, on the run's form.
+      </li>
+      <li>
+        <strong>Published results.</strong> A result holds no personal data except your affiliation
+        answer (yes or no, and which system), and it is not linked to your GitHub account.
+      </li>
+      <li>
+        <strong>Emails.</strong> If you email us, we keep the correspondence to deal with it.
+      </li>
+    </ul>
+    <p>
+      Our lawful basis is legitimate interests: running a free public benchmark, applying its
+      fair-use limits, keeping it secure and handling reports. We do not sell data or use it for
+      marketing.
+    </p>
+
+    <h2>3. Who else handles it</h2>
+    <ul>
+      <li>GitHub, for sign-in.</li>
+      <li>Google Cloud, which runs the runner in the United States (Iowa).</li>
+      <li>Cloudflare, which serves the website and the published result files.</li>
+    </ul>
+    <p>
+      These providers may process data in the United States. Transfers rely on the UK–US data bridge
+      where the provider is certified under it, and otherwise on the UK's standard contract terms.
+      Your memory service and judge provider (Anthropic or OpenRouter) receive the benchmark data
+      under your own accounts and their own privacy terms; that data is dataset text, not personal
+      data about you.
+    </p>
+
+    <h2>4. How long we keep it</h2>
+    <ul>
+      <li>Run records: deleted automatically 90 days after the run starts.</li>
+      <li>Daily-limit counters, which hold the same hash: deleted after 30 days.</li>
+      <li>The runner's request logs and the run jobs' logs: 30 days.</li>
+      <li>Cloudflare's logs: as Cloudflare's own policies set.</li>
+      <li>
+        Published results: for as long as the leaderboard runs, unless removed under the{" "}
+        <a href="/corrections/">Corrections policy</a>.
+      </li>
+      <li>Emails: as long as we need them to deal with what you asked.</li>
+    </ul>
+
+    <h2>5. Your rights</h2>
+    <p>
+      You can ask to see a copy of your data, to correct or delete it, and to restrict or object to
+      how we use it. Email <a href="mailto:admin@memjudge.org">admin@memjudge.org</a>. We store only
+      a hash of your GitHub id, so tell us your GitHub username and we will find your records from
+      it.
+    </p>
+
+    <h2>6. Complaints</h2>
+    <p>
+      If you are unhappy with how we handle your data, email{" "}
+      <a href="mailto:admin@memjudge.org">admin@memjudge.org</a> first. We acknowledge a complaint
+      within 30 days and tell you what we did about it. You can also complain to the Information
+      Commissioner's Office at <a href="https://ico.org.uk/make-a-complaint/">ico.org.uk</a> or on
+      0303 123 1113.
+    </p>
+
+    <h2>7. Children and changes</h2>
+    <p>
+      The hosted runner is for people aged 18 or over. We may update this notice; the date at the
+      top shows the current version.
+    </p>
+  </article>
+</Base>

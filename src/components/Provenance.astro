@@ -1,0 +1,319 @@
+---
+import { date, duration, int } from "../lib/format.ts";
+import { modelsLabel, settingValue } from "../lib/naming.ts";
+import { seasonName } from "../lib/seasons.ts";
+import { getSite } from "../lib/site.ts";
+import type { RunEntry } from "../lib/site-types.ts";
+
+interface Props {
+  run: RunEntry;
+}
+
+const { run } = Astro.props;
+const seasons = getSite().seasons;
+const r = run.result;
+const j = r.judge;
+const seconds = (Date.parse(r.finished_at) - Date.parse(r.started_at)) / 1000;
+const docs = "https://github.com/memjudge/memjudge/blob/main/docs";
+---
+
+<section class="section" id="judge" aria-labelledby="judge-title">
+  <div class="section-head">
+    <div>
+      <h2 id="judge-title">Judge</h2>
+      <p>
+        A season is one fixed set of judging rules: one pinned judge model, its settings and its
+        prompt rule on every question. When the rules change a new season starts, and earlier runs
+        are judged again from their stored contexts, without re-running the memory system.{" "}
+        <a href="/seasons/">Seasons</a>
+      </p>
+    </div>
+  </div>
+  <dl class="facts">
+    <div>
+      <dt>Model</dt>
+      <dd>{j.model}</dd>
+    </div>
+    <div>
+      <dt>Route</dt>
+      <dd>
+        {j.route}
+        {j.upstream_provider ? `, via ${j.upstream_provider}` : ""}
+      </dd>
+    </div>
+    <div>
+      <dt>Season</dt>
+      <dd>
+        {j.official ? (
+          <a href={`/seasons/#season-${j.season}`}>{seasonName(seasons, j.season)}</a>
+        ) : (
+          "unofficial judge"
+        )}
+      </dd>
+    </div>
+    <div>
+      <dt>Effort</dt>
+      <dd>{j.effort ?? "default"}</dd>
+    </div>
+    <div>
+      <dt>Output limit</dt>
+      <dd>{int(j.max_output_tokens)} tokens</dd>
+    </div>
+    <div>
+      <dt>Prompt</dt>
+      <dd>
+        {j.prompt_version} <span class="hash mono">{j.prompt_hash}</span>
+      </dd>
+    </div>
+    {j.served_by.length > 0 && (
+      <div>
+        <dt>Served by</dt>
+        <dd>{j.served_by.join(", ")}</dd>
+      </div>
+    )}
+  </dl>
+</section>
+
+<section class="section" id="provenance" aria-labelledby="provenance-title">
+  <div class="section-head">
+    <div>
+      <h2 id="provenance-title">How this result was produced</h2>
+      <p>
+        Everything below is part of the signed result. Change any of it and the signature no longer
+        matches.
+      </p>
+    </div>
+  </div>
+
+  <div class="prov-grid">
+    <div>
+      <h3>Run</h3>
+      <dl class="facts">
+        <div>
+          <dt>Run id</dt>
+          <dd class="mono">{r.signed_run_id}</dd>
+        </div>
+        <div>
+          <dt>Mode</dt>
+          <dd>{r.mode === "hosted" ? "hosted runner" : "local run"}</dd>
+        </div>
+        <div>
+          <dt>Finished</dt>
+          <dd>{date(r.finished_at)}</dd>
+        </div>
+        <div>
+          <dt>Duration</dt>
+          <dd>{duration(seconds)}</dd>
+        </div>
+        <div>
+          <dt>memjudge version</dt>
+          <dd>{r.tool.version}</dd>
+        </div>
+        {r.tool.commit && (
+          <div>
+            <dt>Commit</dt>
+            <dd class="mono">{r.tool.commit.slice(0, 12)}</dd>
+          </div>
+        )}
+        {r.tool.image_digest && (
+          <div>
+            <dt>Image</dt>
+            <dd class="hash mono">{r.tool.image_digest}</dd>
+          </div>
+        )}
+        <div>
+          <dt>Context budget</dt>
+          <dd>
+            {int(r.config.budget_tokens)} tokens ({r.config.tokenizer})
+          </dd>
+        </div>
+        <div>
+          <dt>Conversations at a time</dt>
+          <dd>{int(r.config.concurrency)}</dd>
+        </div>
+        <div>
+          <dt>Submitter affiliated</dt>
+          <dd>
+            {r.affiliation.affiliated === null
+              ? "not stated"
+              : r.affiliation.affiliated
+                ? `yes${r.affiliation.system ? `, with ${r.affiliation.system}` : ""}`
+                : "no"}
+          </dd>
+        </div>
+        {r.reused_ingestion && (
+          <div>
+            <dt>Ingestion reused from</dt>
+            <dd class="mono">{r.reused_ingestion.run_id}</dd>
+          </div>
+        )}
+      </dl>
+    </div>
+
+    <div>
+      <h3>Dataset</h3>
+      <dl class="facts">
+        <div>
+          <dt>Name</dt>
+          <dd>
+            {r.dataset.name} {r.dataset.version}
+          </dd>
+        </div>
+        <div>
+          <dt>Questions</dt>
+          <dd>{int(r.dataset.questions)}</dd>
+        </div>
+        {r.dataset.conversation_ids && (
+          <div>
+            <dt>Conversations run</dt>
+            <dd>{r.dataset.conversation_ids.join(", ")}</dd>
+          </div>
+        )}
+        <div>
+          <dt>Licence</dt>
+          <dd>{r.dataset.license}</dd>
+        </div>
+        <div>
+          <dt>Corrections applied</dt>
+          <dd>{int(r.dataset.errata_applied)}</dd>
+        </div>
+        <div>
+          <dt>Hash</dt>
+          <dd class="hash mono">{r.dataset.hash}</dd>
+        </div>
+        {r.dataset.upstream_sha256 && (
+          <div>
+            <dt>Source file hash</dt>
+            <dd class="hash mono">{r.dataset.upstream_sha256}</dd>
+          </div>
+        )}
+      </dl>
+    </div>
+
+    <div>
+      <h3>Connector</h3>
+      <dl class="facts">
+        <div>
+          <dt>Connector</dt>
+          <dd class="mono">{r.connector.id}</dd>
+        </div>
+        <div>
+          <dt>Written by</dt>
+          <dd>
+            {r.connector.label === "vendor-maintained" ? "the vendor" : "MemJudge maintainers"}
+          </dd>
+        </div>
+        <div>
+          <dt>SDK</dt>
+          <dd>{r.connector.sdk ?? "none (plain HTTP)"}</dd>
+        </div>
+        {r.connector.endpoint && (
+          <div>
+            <dt>Endpoint</dt>
+            <dd class="mono">{r.connector.endpoint}</dd>
+          </div>
+        )}
+        <div>
+          <dt>Code hash</dt>
+          <dd class="hash mono">{r.connector.code_hash}</dd>
+        </div>
+        {modelsLabel(r.connector.models) && (
+          <div>
+            <dt>Models</dt>
+            <dd class="mono setting">{modelsLabel(r.connector.models)}</dd>
+          </div>
+        )}
+        {Object.entries(r.connector.settings).map(([key, value]) => (
+          <div>
+            <dt>{key.replaceAll("_", " ")}</dt>
+            <dd class="mono setting">{settingValue(value)}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  </div>
+
+  <h3 class="subhead">Raw files</h3>
+  <div class="table-wrap">
+    <table class="data">
+      <thead>
+        <tr>
+          <th>File</th>
+          <th>SHA-256</th>
+        </tr>
+      </thead>
+      <tbody>
+        {r.artifacts.map((a) => (
+          <tr>
+            <td>{a.url ? <a href={a.url}>{a.name}</a> : a.name}</td>
+            <td class="hash mono">{a.sha256.replace(/^sha256:/, "")}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="subhead">Check it yourself</h3>
+  <p>
+    The signed result is signed with key <span class="mono">{run.keyId}</span>, one of the trusted
+    keys published in the leaderboard repository. Download it and verify it with the memjudge
+    command-line tool; add <code>--artifacts</code>
+    with the raw files to check those too. <a href={`${docs}/signing.md`}>How signing works</a>.
+  </p>
+  <pre class="command"><code>memjudge verify {r.signed_run_id}.json</code></pre>
+  <p class="download">
+    <a class="button quiet" href={run.signedFile} download={`${r.signed_run_id}.json`}>
+      Download the signed result
+    </a>
+  </p>
+</section>
+
+<style>
+  .prov-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+    gap: 2rem 2.5rem;
+  }
+
+  .prov-grid h3,
+  .subhead {
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--ink);
+    font-size: var(--t-14);
+  }
+
+  .subhead {
+    margin-top: 2.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .prov-grid .facts {
+    grid-template-columns: 1fr;
+  }
+
+  .hash {
+    overflow-wrap: anywhere;
+    font-size: var(--t-12);
+    text-align: right;
+  }
+
+  .facts .setting {
+    overflow-wrap: anywhere;
+  }
+
+  .command {
+    margin-top: 1rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    background: var(--wash);
+  }
+
+  .download {
+    margin-top: 1rem;
+  }
+
+  section > .facts {
+    max-width: 52rem;
+  }
+</style>

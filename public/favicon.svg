@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+  <style>
+    rect { fill: #142b44; }
+    .hollow { fill: none; stroke: #142b44; stroke-width: 1.5; }
+    @media (prefers-color-scheme: dark) {
+      rect { fill: #e3eaf2; }
+      .hollow { fill: none; stroke: #e3eaf2; }
+    }
+  </style>
+  <rect x="1" y="1" width="8" height="8" rx="1.2"/>
+  <rect x="11" y="1" width="8" height="8" rx="1.2"/>
+  <rect x="1" y="11" width="8" height="8" rx="1.2"/>
+  <rect class="hollow" x="11.75" y="11.75" width="6.5" height="6.5" rx="0.8"/>
+</svg>

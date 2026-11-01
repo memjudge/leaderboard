@@ -1,0 +1,2 @@
+# Test fixtures are signed and hashed byte for byte: never convert their line endings.
+tests/fixtures/** -text
