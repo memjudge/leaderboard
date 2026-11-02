@@ -142,7 +142,9 @@ function mountCharts(
         run: k,
       };
     });
-    mountChart(tradeoffEl, (p, width) => tradeoffOption(points, "tokens", p, width));
+    mountChart(tradeoffEl, (p, width, height) =>
+      tradeoffOption(points, "tokens", p, width, height),
+    );
   }
 }
 

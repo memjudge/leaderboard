@@ -63,14 +63,16 @@ function initTradeoff(): void {
 
   const mounted = mountChart(
     el,
-    (p, width) => tradeoffOption(points, axis, p, width),
+    (p, width, height) => tradeoffOption(points, axis, p, width, height),
     "No run reported this yet.",
   );
   mounted.chart.on("click", (params) => {
     const id = (params.data as { id?: string } | undefined)?.id;
     if (id) window.location.href = `/runs/${id}/`;
   });
+  const measures = document.querySelectorAll<HTMLElement>("[data-measure]");
   const describe = () => {
+    for (const m of measures) m.textContent = axis;
     const missing = missingOn(points, axis);
     if (note) {
       note.textContent =

@@ -20,6 +20,8 @@ export interface Palette {
   rule: string;
   wash: string;
   runs: string[];
+  /** The leaderboard chart's accent for runs on the frontier. */
+  frontier: string;
   font: string;
 }
 
@@ -34,6 +36,7 @@ export function palette(): Palette {
     rule: v("--rule"),
     wash: v("--wash"),
     runs: RUN_COLORS.map(v),
+    frontier: v("--frontier"),
     font: getComputedStyle(document.body).fontFamily,
   };
 }
@@ -81,17 +84,17 @@ export interface Mounted {
 }
 
 /**
- * Draw `build(palette, width)` into `el`, and again on resize or theme change, so a chart
- * can adapt to narrow screens. When `build` returns null the chart is replaced by `empty`.
+ * Draw `build(palette, width, height)` into `el`, and again on resize or theme change, so a
+ * chart can adapt to narrow screens. When `build` returns null the chart is replaced by `empty`.
  */
 export function mountChart(
   el: HTMLElement,
-  build: (p: Palette, width: number) => Option | null,
+  build: (p: Palette, width: number, height: number) => Option | null,
   empty = "Nothing to show.",
 ): Mounted {
   const chart = echarts.init(el, null, { renderer: "svg" });
   const redraw = () => {
-    const option = build(palette(), el.clientWidth);
+    const option = build(palette(), el.clientWidth, el.clientHeight);
     el.querySelector(".chart-empty")?.remove();
     if (option === null) {
       chart.clear();

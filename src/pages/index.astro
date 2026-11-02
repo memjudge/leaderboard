@@ -1,6 +1,7 @@
 ---
 import BoardView from "../components/BoardView.astro";
 import EmptyBoard from "../components/EmptyBoard.astro";
+import WorkedExample from "../components/WorkedExample.astro";
 import Base from "../layouts/Base.astro";
 import { getSite } from "../lib/site.ts";
 
@@ -13,5 +14,11 @@ const board = site.boards[0];
   description="Signed, reproducible results for AI memory systems: accuracy against context tokens and latency, down to every judged question."
   current="leaderboard"
 >
-  {board ? <BoardView board={board} /> : <EmptyBoard />}
+  {board ? (
+    <BoardView board={board}>
+      <WorkedExample />
+    </BoardView>
+  ) : (
+    <EmptyBoard />
+  )}
 </Base>

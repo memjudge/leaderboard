@@ -1,0 +1,424 @@
+---
+/**
+ * The homepage walk-through: one real question from the Season 1 Top 30 board, from the turns
+ * that hold its answer to what two runs returned and how the judge ruled. Results and judge
+ * reasons are copied from those runs' published records (conv-26:q60); the conversation text
+ * is LoCoMo's, credited under the board.
+ */
+import { int } from "../lib/format.ts";
+import { getSite } from "../lib/site.ts";
+
+/** The 19 sessions of conversation conv-26, to place the timeline's ticks. */
+const SESSIONS = [
+  "2023-05-08",
+  "2023-05-25",
+  "2023-06-09",
+  "2023-06-27",
+  "2023-07-03",
+  "2023-07-06",
+  "2023-07-12",
+  "2023-07-15",
+  "2023-07-17",
+  "2023-07-20",
+  "2023-08-14",
+  "2023-08-17",
+  "2023-08-23",
+  "2023-08-25",
+  "2023-08-28",
+  "2023-09-13",
+  "2023-10-13",
+  "2023-10-20",
+  "2023-10-22",
+];
+const start = Date.parse(SESSIONS[0]!);
+const span = Date.parse(SESSIONS.at(-1)!) - start;
+const at = (day: string) => `${(((Date.parse(day) - start) / span) * 100).toFixed(2)}%`;
+
+const EVIDENCE = [
+  {
+    day: "2023-05-25",
+    label: "25 May",
+    turn: 23,
+    text: "So I'm carving out some me-time each day - running, reading, or playing my violin - which refreshes me and helps me stay present for my fam!",
+  },
+  {
+    day: "2023-08-28",
+    label: "28 Aug",
+    turn: 332,
+    text: "Yeah, I play clarinet! Started when I was young and it's been great. Expression of myself and a way to relax.",
+  },
+];
+
+interface Returned {
+  id: string;
+  label: string;
+  tokens: number;
+  correct: boolean;
+  /** The first results, in order; `hit` marks the ones holding part of the answer. */
+  results: { text: string; hit?: boolean }[];
+  missing?: string;
+  reason: string;
+}
+
+const RUNS: Returned[] = [
+  {
+    id: "20261101T010624Z-79759b-top30",
+    label: "Mem0 open source",
+    tokens: 1213,
+    correct: true,
+    results: [
+      {
+        text: "Melanie plays the clarinet, which she started learning when she was young; playing it helps her express herself and relax. …",
+        hit: true,
+      },
+      {
+        text: "Caroline asked Melanie whether she plays any musical instruments, showing interest in Melanie’s own musical background.",
+      },
+      {
+        text: "As of May 25, 2023, Melanie was carving out daily me-time by running, reading, or playing her violin; …",
+        hit: true,
+      },
+    ],
+    reason:
+      "The context states Melanie plays the clarinet and mentions she plays her violin as me-time, covering both instruments.",
+  },
+  {
+    id: "20261101T003952Z-a4ec8e-top30",
+    label: "BM25 keyword retrieval over raw turns",
+    tokens: 863,
+    correct: false,
+    results: [
+      {
+        text: "[2023-08-28 15:19] Caroline: Thanks, Melanie! Appreciate it. You play any instruments?",
+      },
+      { text: "[2023-08-28 15:19] Melanie: Cool! What type of music do you play?" },
+      {
+        text: "[2023-08-28 15:19] Melanie: Yeah, I play clarinet! Started when I was young and it's been great. …",
+        hit: true,
+      },
+    ],
+    missing: "The violin turn of 25 May is not among its 30 results.",
+    reason: "Only clarinet is mentioned for Melanie; violin is missing from the context.",
+  },
+];
+const compareHref = `/compare/?runs=${RUNS.map((r) => r.id).join(",")}`;
+// Shown only while both runs are published, so the example never points at missing runs.
+const site = getSite();
+const live = RUNS.every((r) => site.runs[r.id]);
+---
+
+{live && (
+  <section class="section example" aria-labelledby="example-title">
+    <div class="section-head">
+      <div>
+        <h2 id="example-title">How one question is scored</h2>
+        <p>
+          Every run is scored on the same 1,986 questions, each the same way. This one is real, from
+          the Top 30 board above.
+        </p>
+      </div>
+    </div>
+
+    <ol class="trace">
+      <li>
+        <h3>
+          <span class="step" aria-hidden="true">
+            1
+          </span>
+          The answer is said twice, months apart
+        </h3>
+        <p class="trace-note">
+          Caroline and Melanie talk in 19 sessions between 8 May and 22 October 2023: 419 turns.
+          Every system stores all of them.
+        </p>
+        <div class="rail" aria-hidden="true">
+          <div class="rail-line">
+            {SESSIONS.map((day) => (
+              <span class="tick" style={`left:${at(day)}`} />
+            ))}
+            {EVIDENCE.map((e) => (
+              <span class="said" style={`left:${at(e.day)}`} />
+            ))}
+            <span class="ask" style="left:100%">
+              ?
+            </span>
+          </div>
+          <div class="rail-labels">
+            {EVIDENCE.map((e) => (
+              <span style={`left:${at(e.day)}`}>{e.label}</span>
+            ))}
+            <span class="end">22 Oct</span>
+          </div>
+        </div>
+        <div class="quotes">
+          {EVIDENCE.map((e) => (
+            <blockquote>
+              <p class="quote-meta">
+                Melanie, {e.label} 2023 · turn {e.turn} of 419
+              </p>
+              <p>“{e.text}”</p>
+            </blockquote>
+          ))}
+        </div>
+      </li>
+
+      <li>
+        <h3>
+          <span class="step" aria-hidden="true">
+            2
+          </span>
+          The question comes after the last session
+        </h3>
+        <p class="question">“What instruments does Melanie play?”</p>
+        <p class="trace-note">
+          Expected answer: <strong>clarinet and violin</strong>
+        </p>
+      </li>
+
+      <li>
+        <h3>
+          <span class="step" aria-hidden="true">
+            3
+          </span>
+          Each system returns its top 30 results, and the judge reads only those
+        </h3>
+        <div class="returns">
+          {RUNS.map((r) => (
+            <article class="returned">
+              <header>
+                <a href={`/runs/${r.id}/`}>{r.label}</a>
+                <span class={`verdict ${r.correct ? "correct" : "incorrect"}`}>
+                  {r.correct ? "Correct" : "Incorrect"}
+                </span>
+              </header>
+              <p class="returned-meta">{int(r.tokens)} tokens · first 3 of 30 results</p>
+              <ol class="results">
+                {r.results.map((item) => (
+                  <li class={item.hit ? "hit" : undefined}>{item.text}</li>
+                ))}
+              </ol>
+              {r.missing && <p class="missing">{r.missing}</p>}
+              <p class="judge">
+                <span>Judge:</span> “{r.reason}”
+              </p>
+            </article>
+          ))}
+        </div>
+      </li>
+    </ol>
+
+    <p class="trace-end">
+      A run's accuracy is the share of all 1,986 questions the judge rules correct.{" "}
+      <a href={compareHref}>Compare these two runs question by question →</a>
+    </p>
+  </section>
+)}
+
+<style>
+  .trace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2.5rem;
+    margin: 2rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .trace h3 {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    font-size: var(--t-18);
+  }
+
+  .step {
+    flex: none;
+    display: inline-grid;
+    place-items: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    border: 1.5px solid var(--ink);
+    border-radius: 50%;
+    font-size: var(--t-14);
+    font-weight: 700;
+    transform: translateY(-0.1rem);
+  }
+
+  .trace-note {
+    margin-top: 0.5rem;
+    max-width: var(--measure);
+    font-size: var(--t-14);
+    color: var(--ink-2);
+  }
+
+  .trace-note strong {
+    color: var(--ink);
+  }
+
+  /* timeline: one tick per session, the two answer turns, the question at the end */
+  .rail {
+    max-width: 48rem;
+    margin: 1.75rem 0 0;
+    padding-right: 1rem;
+  }
+
+  .rail-line {
+    position: relative;
+    height: 1.5rem;
+    border-bottom: 1px solid var(--ink-3);
+  }
+
+  .tick,
+  .said,
+  .ask {
+    position: absolute;
+    bottom: 0;
+    transform: translateX(-50%);
+  }
+
+  .tick {
+    width: 1px;
+    height: 0.6rem;
+    background: var(--ink-3);
+  }
+
+  .said {
+    bottom: -0.4rem;
+    width: 0.8rem;
+    height: 0.8rem;
+    border: 2px solid var(--paper);
+    border-radius: 50%;
+    background: var(--ink);
+  }
+
+  .ask {
+    bottom: -0.55rem;
+    display: grid;
+    place-items: center;
+    width: 1.1rem;
+    height: 1.1rem;
+    border: 1.5px solid var(--ink);
+    border-radius: 3px;
+    background: var(--paper);
+    font-size: var(--t-12);
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .rail-labels {
+    position: relative;
+    height: 1.25rem;
+    margin-top: 0.7rem;
+    font-size: var(--t-12);
+    color: var(--ink-2);
+  }
+
+  .rail-labels span {
+    position: absolute;
+    transform: translateX(-50%);
+    white-space: nowrap;
+  }
+
+  .rail-labels .end {
+    right: -1rem;
+    transform: none;
+  }
+
+  .quotes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
+    gap: 1rem;
+    max-width: 60rem;
+    margin-top: 1.25rem;
+  }
+
+  .quotes blockquote {
+    margin: 0;
+    padding: 0.75rem 1rem;
+    background: var(--wash);
+    border-radius: var(--radius);
+  }
+
+  .quote-meta {
+    margin-bottom: 0.35rem;
+    font-size: var(--t-12);
+    color: var(--ink-2);
+  }
+
+  .question {
+    margin-top: 0.75rem;
+    font-size: var(--t-21);
+    font-weight: 600;
+  }
+
+  .returns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
+    gap: 1rem;
+    margin-top: 1.25rem;
+  }
+
+  .returned {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+  }
+
+  .returned header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-weight: 600;
+  }
+
+  .returned-meta {
+    margin-top: 0.25rem;
+    font-size: var(--t-12);
+    color: var(--ink-2);
+  }
+
+  .results {
+    display: grid;
+    gap: 0.4rem;
+    margin: 0.75rem 0 0;
+    padding-left: 1.5rem;
+    font-size: var(--t-14);
+    color: var(--ink-2);
+  }
+
+  .results li {
+    padding: 0.2rem 0.4rem;
+  }
+
+  .results li.hit {
+    color: var(--ink);
+    background: var(--wash);
+    border-radius: var(--radius);
+  }
+
+  .missing {
+    margin-top: 0.5rem;
+    font-size: var(--t-14);
+    font-style: italic;
+  }
+
+  .judge {
+    margin-top: auto;
+    padding-top: 0.75rem;
+    font-size: var(--t-14);
+  }
+
+  .judge span {
+    font-weight: 700;
+  }
+
+  .trace-end {
+    margin-top: 2rem;
+    font-size: var(--t-14);
+    color: var(--ink-2);
+  }
+</style>
