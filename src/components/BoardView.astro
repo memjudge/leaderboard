@@ -214,6 +214,27 @@ const boardData = JSON.stringify({ points }).replace(/</g, "\\u003c");
       </button>
     </div>
   </div>
+  <ul class="chart-key" aria-label="Chart key">
+    <li>
+      <svg class="key-mark" viewBox="0 0 24 12" aria-hidden="true">
+        <path d="M0 6h24" class="key-line" />
+        <circle cx="12" cy="6" r="4.5" class="key-dot" />
+      </svg>
+      <span>
+        On the frontier: no other run beats it on both accuracy and <span data-measure>tokens</span>
+      </span>
+    </li>
+    <li>
+      <svg class="key-mark" viewBox="0 0 24 12" aria-hidden="true">
+        <circle cx="12" cy="6" r="4.5" class="key-ring" />
+      </svg>
+      Other runs
+    </li>
+    <li>
+      <span class="key-mark key-open" aria-hidden="true"></span>
+      <span>Shaded: a run here would beat every run so far on both</span>
+    </li>
+  </ul>
   <div class="chart tradeoff-chart" data-tradeoff></div>
   <p class="chart-note" data-tradeoff-note aria-live="polite"></p>
   <script type="application/json" id="board-data" set:html={boardData} />
@@ -448,6 +469,8 @@ const boardData = JSON.stringify({ points }).replace(/</g, "\\u003c");
   </div>
 </section>
 
+<slot />
+
 <DatasetCredit name={board.dataset.name} license={board.dataset.license} />
 
 <script>
@@ -558,6 +581,49 @@ const boardData = JSON.stringify({ points }).replace(/</g, "\\u003c");
 
   .tradeoff-chart {
     height: clamp(22rem, 40vw, 28rem);
+  }
+
+  .chart-key {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    margin: 1.25rem 0 0.5rem;
+    padding: 0;
+    list-style: none;
+    font-size: var(--t-14);
+    color: var(--ink-2);
+  }
+
+  .chart-key li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .key-mark {
+    flex: none;
+    width: 1.5rem;
+    height: 0.75rem;
+  }
+
+  .key-line {
+    stroke: var(--frontier);
+    stroke-width: 2;
+  }
+
+  .key-dot {
+    fill: var(--frontier);
+  }
+
+  .key-ring {
+    fill: var(--paper);
+    stroke: var(--ink-3);
+    stroke-width: 2;
+  }
+
+  .key-open {
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--frontier) 12%, var(--paper));
   }
 
   .ranking-controls {
