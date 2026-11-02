@@ -3,8 +3,9 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "memjudge-leaderboard",
   "compatibility_date": "2026-10-07",
-  // Preview links per version stay off, so only released builds are served.
-  "workers_dev": true,
+  // memjudge.org is the only address: no workers.dev address, and preview links per version
+  // stay off, so only released builds are served.
+  "workers_dev": false,
   "preview_urls": false,
   // Added in the dashboard first (the deploy token can't create domains); listed here so
   // deploys keep it.
